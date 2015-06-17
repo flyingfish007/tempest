@@ -136,6 +136,7 @@ from tempest.services.volume.v2.json.qos_client import QosSpecsV2ClientJSON
 from tempest.services.volume.v2.json.snapshots_client import \
     SnapshotsV2ClientJSON
 from tempest.services.volume.v2.json.volumes_client import VolumesV2ClientJSON
+from tempest.services.vsm.json.clusters_client import ClustersClientJSON
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -165,6 +166,7 @@ class Manager(manager.Manager):
     def __init__(self, credentials=None, service=None):
         super(Manager, self).__init__(credentials=credentials)
 
+        self.__set_vsm_clients()
         self._set_compute_clients()
         self._set_database_clients()
         self._set_identity_clients()
@@ -239,6 +241,14 @@ class Manager(manager.Manager):
             # and generate new ones if needed
             self.ec2api_client = botoclients.APIClientEC2(self.identity_client)
             self.s3_client = botoclients.ObjectClientS3(self.identity_client)
+
+    def __set_vsm_clients(self):
+        params = {
+            'service': CONF.vsm.catalog_type,
+            'region': CONF.vsm.region or CONF.identity.region,
+            'endpoint_type': CONF.vsm.endpoint_type
+        }
+        self.clusters_client = ClustersClientJSON(self.auth_provider, **params)
 
     def _set_compute_clients(self):
         params = {

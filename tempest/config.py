@@ -171,6 +171,23 @@ IdentityFeatureGroup = [
                 help='Is the v3 identity API enabled'),
 ]
 
+vsm_group = cfg.OptGroup(name='vsm',
+                         title='VSM Service Options')
+
+VsmGroup = [
+    cfg.StrOpt('catalog_type',
+               default='vsm',
+               help="Catalog type of the VSM service."),
+    cfg.StrOpt('region',
+               help="The vsm region name to use. If empty, the value of"
+                    "identity.region is used instead. If no such region is found in the"
+                    "service catalog, the first found one is used."),
+    cfg.StrOpt('endpoint_type',
+               default="publicURL",
+               help="The endpoint type to use for the vsm service."
+                    "Allowed values: public, admin, internal, publicURL, adminURL, internalURL")
+]
+
 compute_group = cfg.OptGroup(name='compute',
                              title='Compute Service Options')
 
@@ -1135,6 +1152,7 @@ NegativeGroup = [
 
 _opts = [
     (auth_group, AuthGroup),
+    (vsm_group, VsmGroup),
     (compute_group, ComputeGroup),
     (compute_features_group, ComputeFeaturesGroup),
     (identity_group, IdentityGroup),
@@ -1196,6 +1214,7 @@ class TempestConfigPrivate(object):
 
     def _set_attrs(self):
         self.auth = _CONF.auth
+        self.vsm = _CONF.vsm
         self.compute = _CONF.compute
         self.compute_feature_enabled = _CONF['compute-feature-enabled']
         self.identity = _CONF.identity

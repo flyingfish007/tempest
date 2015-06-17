@@ -1200,3 +1200,22 @@
 # Update bootable status of a volume Not implemented on icehouse
 # (boolean value)
 #bootable = false
+
+
+[vsm]
+
+#
+# From tempest.config
+#
+
+# Catalog type of the VSM Service (string value)
+#catalog_type = vsm
+
+# The vsm region name to use. If empty, the value of
+# identity.region is used instead. If no such region is found in the
+# service catalog, the first found one is used. (string value)
+#region =
+
+# The endpoint type to use for the vsm service. (string value)
+# Allowed values: public, admin, internal, publicURL, adminURL, internalURL
+#endpoint_type = publicURL
