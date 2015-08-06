@@ -1219,3 +1219,8 @@
 # The endpoint type to use for the vsm service. (string value)
 # Allowed values: public, admin, internal, publicURL, adminURL, internalURL
 #endpoint_type = publicURL
+
+
+#file_system = xfs
+
+#
