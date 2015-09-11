@@ -30,15 +30,12 @@ list_clusters = {
                         'size': {'type': 'string'},
                         'scecondary_public_ip_netmask': {'type': 'string'},
                         'primary_public_ip_netmask': {'type': 'string'},
-                        'primary_public_network': {'type': 'string'},
                         'cluster_network': {'type': 'string'},
-                        'journal_size': {'type': 'string'},
-                        'secondary_public_network': {'type': 'string'}
+                        'journal_size': {'type': 'string'}
                     },
                     'required': ['id', 'name', 'cluster_ip_netmask', 'file_system',
                                  'size', 'scecondary_public_ip_netmask', 'primary_public_ip_netmask',
-                                 'primary_public_network', 'cluster_network', 'journal_size',
-                                 'secondary_public_network']
+                                 'cluster_network', 'journal_size']
                 }
             }
         },
