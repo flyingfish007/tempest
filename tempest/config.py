@@ -204,7 +204,19 @@ VsmGroup = [
     cfg.StrOpt('endpoint_type',
                default="publicURL",
                help="The endpoint type to use for the vsm service."
-                    "Allowed values: public, admin, internal, publicURL, adminURL, internalURL")
+                    "Allowed values: public, admin, internal, publicURL, adminURL, internalURL"),
+    cfg.IntOpt('servers_count',
+               default=4,
+               help="The servers will be used to set up vsm cluster."),
+    cfg.IntOpt('image_name',
+               default="ubuntu14",
+               help="The image of vsm."),
+    cfg.IntOpt('flavor_id',
+               default=1,
+               help="The flavor of vm."),
+    cfg.IntOpt('flavor_id',
+               default=1,
+               help="The flavor of vm.")
 ]
 
 compute_group = cfg.OptGroup(name='compute',
