@@ -207,12 +207,33 @@ VsmGroup = [
                help="The endpoint type to use for the vsm service."
                     "Allowed values: public, admin, internal, publicURL, "
                     "adminURL, internalURL"),
-    cfg.IntOpt('servers_count',
-               default=4,
-               help="The servers will be used to set up vsm cluster."),
     cfg.StrOpt('image_name',
                default="ubuntu14",
-               help="The image of vsm.")
+               help="The image is used to create servers for vsm."),
+    cfg.StrOpt('flavor_id',
+               default="1",
+               help="The id of flavor."),
+    cfg.ListOpt('volumes_name',
+               default=["volume1-test", "volume2-test", "volume3-test",
+                        "volume4-test", "volume5-test", "volume6-test",
+                        "volume7-test", "volume8-test"],
+               help="The list of volumes name"),
+    cfg.IntOpt('volume_size',
+               default=5,
+               help="Default size in GB for volumes created by volumes"),
+    cfg.StrOpt('net_id',
+               default="699171cb-4d05-476d-995b-69f2d511e247",
+               help="The id of network."),
+    cfg.ListOpt('servers_name',
+               default=["controller-test", "node1-test",
+                        "node2-test", "node3-test"],
+               help="The list of servers name"),
+    cfg.StrOpt('security_group',
+               default="default",
+               help="The security group"),
+    cfg.StrOpt('key_name',
+               default="demo-key",
+               help="The key name")
 ]
 
 compute_group = cfg.OptGroup(name='compute',

@@ -233,9 +233,8 @@ if __name__ == "__main__":
         error("No volumes name, please check your flavor id in tempest.conf "
               "or config.py file")
         sys.exit(1)
-    volumes_name_list = apply_servers.volumes_name.split(",")
+    volumes_name_list = apply_servers.volumes_name
     for volume_name in volumes_name_list:
-        volume_name = volume_name.strip()
         apply_servers.volume_available(volume_name)
 
     servers_name_list = apply_servers.servers_name.split(",")
