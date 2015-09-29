@@ -33,8 +33,10 @@ list_clusters = {
                         'cluster_network': {'type': 'string'},
                         'journal_size': {'type': 'string'}
                     },
-                    'required': ['id', 'name', 'cluster_ip_netmask', 'file_system',
-                                 'size', 'scecondary_public_ip_netmask', 'primary_public_ip_netmask',
+                    'required': ['id', 'name', 'cluster_ip_netmask',
+                                 'file_system', 'size',
+                                 'scecondary_public_ip_netmask',
+                                 'primary_public_ip_netmask',
                                  'cluster_network', 'journal_size']
                 }
             }

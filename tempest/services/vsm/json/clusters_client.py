@@ -18,6 +18,7 @@ import json
 from tempest.api_schema.response.vsm.v2_0 import clusters as schema
 from tempest.common import service_client
 
+
 class ClustersClient(service_client.ServiceClient):
 
     def list_clusters(self, params=None):

@@ -16,6 +16,7 @@
 from tempest.api.vsm import base
 from tempest import test
 
+
 class ClustersTestJSON(base.BaseVSMAdminTest):
 
     """
