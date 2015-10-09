@@ -14,8 +14,7 @@
 
 import sys
 import time
-
-from tempest import config
+import ConfigParser
 
 try:
     from novaclient.v1_1 import client as nc_client
@@ -26,8 +25,12 @@ try:
 except Exception:
     from cinderclient.v2 import client as cc_client
 
-CONF = config.CONF
 
+CONF = ConfigParser.ConfigParser()
+if sys.argv[1]:
+    CONF.read(sys.argv[1])
+else:
+    CONF.read("/opt/tempest/etc/tempest.conf")
 
 def error(msg):
     print('---------------ERROR----------------')
@@ -46,13 +49,13 @@ class ApplyServers(object):
 
     """
     def __init__(self):
-        self.uri = CONF.vsm.openstack_auth_uri
-        self.auth_version = CONF.vsm.openstack_auth_version
+        self.uri = CONF.get("vsm", "openstack_auth_uri")
+        self.auth_version = CONF.get("vsm", "openstack_auth_version")
         self.auth_url = self.uri + "/" + self.auth_version
-        self.region = CONF.vsm.openstack_region
-        self.admin_username = CONF.vsm.openstack_username
-        self.admin_tenant_name = CONF.vsm.openstack_tenant_name
-        self.admin_password = CONF.vsm.openstack_password
+        self.region = CONF.get("vsm", "openstack_region")
+        self.admin_username = CONF.get("vsm", "openstack_username")
+        self.admin_tenant_name = CONF.get("vsm", "openstack_tenant_name")
+        self.admin_password = CONF.get("vsm", "openstack_password")
 
         self.novaclient = nc_client.Client(
             self.admin_username,
@@ -70,14 +73,14 @@ class ApplyServers(object):
             region_name=self.region
         )
 
-        self.image_name = CONF.vsm.image_name
-        self.flavor_id = CONF.vsm.flavor_id
-        self.volumes_name = CONF.vsm.volumes_name
-        self.volume_size = CONF.vsm.volume_size
-        self.net_id = CONF.vsm.net_id
-        self.servers_name = CONF.vsm.servers_name
-        self.security_group = CONF.vsm.security_group
-        self.key_name = CONF.vsm.key_name
+        self.image_name = CONF.get("vsm", "image_name")
+        self.flavor_id = CONF.get("vsm", "flavor_id")
+        self.volumes_name = CONF.get("vsm", "volumes_name")
+        self.volume_size = CONF.get("vsm", "volume_size")
+        self.net_id = CONF.get("vsm", "net_id")
+        self.servers_name = CONF.get("vsm", "servers_name")
+        self.security_group = CONF.get("vsm", "security_group")
+        self.key_name = CONF.get("vsm", "key_name")
 
     def image_available(self, image_name):
         """
@@ -143,7 +146,7 @@ class ApplyServers(object):
         if volume_name in [volume.name for volume in volumes_list]:
             print("The volume is available")
         else:
-            error("Not found the volume %s" % volume_name)
+            print("Not found the volume %s" % volume_name)
             print("Creating the volume %s" % volume_name)
             volume_status = self.create_volume(volume_name, self.volume_size)
             count = 1
@@ -165,8 +168,11 @@ class ApplyServers(object):
         :return:
         """
         self.cinderclient.volumes.create(size, display_name=name)
-        volume_status = self.cinderclient.volumes.get(name)
-        return volume_status
+        time.sleep(2)
+        volumes = self.cinderclient.volumes.list()
+        for volume in volumes:
+            if name == volume.name:
+                return volume.status
 
     def create_server(self, server_name, image_name, flavor_id, net_id,
                       security_group="default", key_name="demo-key"):
@@ -235,9 +241,10 @@ if __name__ == "__main__":
         error("No volumes name, please check your "
               "flavor id in tempest.conf or config.py file")
         sys.exit(1)
-    volumes_name_list = apply_servers.volumes_name
+    volumes_name = apply_servers.volumes_name
+    volumes_name_list = volumes_name.split(",")
     for volume_name in volumes_name_list:
-        apply_servers.volume_available(volume_name)
+        apply_servers.volume_available(volume_name.strip(" "))
 
     servers_name_list = apply_servers.servers_name.split(",")
     for server_name in servers_name_list:

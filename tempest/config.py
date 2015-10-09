@@ -208,7 +208,7 @@ VsmGroup = [
     cfg.StrOpt('openstack_auth_uri',
                help="Full URI of the OpenStack Identity API (Keystone), v2"),
     cfg.StrOpt('openstack_auth_version',
-               default='v2',
+               default='v2.0',
                help="Identity API version to be used for authentication "
                     "for API tests."),
     cfg.StrOpt('openstack_region',
@@ -227,7 +227,7 @@ VsmGroup = [
                     "Allowed values: public, admin, internal, publicURL, "
                     "adminURL, internalURL"),
     cfg.StrOpt('image_name',
-               default="ubuntu14",
+               default="ubuntu14.4",
                help="The image is used to create servers for vsm."),
     cfg.StrOpt('flavor_id',
                default="1",
