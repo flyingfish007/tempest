@@ -1,4 +1,5 @@
-# Copyright 2014 NEC Corporation.  All rights reserved.
+# Copyright 2012 OpenStack Foundation
+# All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -11,6 +12,9 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
+from tempest.api.vsm import base
+from tempest import test
 
 import sys
 import time
@@ -225,26 +229,38 @@ class ApplyServers(object):
         return
 
 
-if __name__ == "__main__":
-    apply_servers = ApplyServers()
-    apply_servers.image_available(apply_servers.image_name)
-    apply_servers.flavor_available(apply_servers.flavor_id)
-    apply_servers.net_available(apply_servers.net_id)
+class ApplyServersTestJSON(base.BaseVSMAdminTest):
 
-    if not apply_servers.volumes_name:
-        error("No volumes name, please check your "
-              "flavor id in tempest.conf or config.py file")
-        sys.exit(1)
-    volumes_name_list = apply_servers.volumes_name
-    for volume_name in volumes_name_list:
-        apply_servers.volume_available(volume_name)
+    """
+    Tests clusters API using admin privileges.
+    """
 
-    servers_name_list = apply_servers.servers_name.split(",")
-    for server_name in servers_name_list:
-        server_name = server_name.strip()
-        apply_servers.create_server(server_name,
-                                    apply_servers.image_name,
-                                    apply_servers.flavor_id,
-                                    apply_servers.net_id,
-                                    apply_servers.security_group,
-                                    apply_servers.key_name)
+    @classmethod
+    def setup_clients(cls):
+        super(ApplyServersTestJSON, cls).setup_clients()
+        cls.client = cls.os_adm.clusters_client
+
+    @test.idempotent_id('087acd2f-ce75-48e4-9b0b-a82c9ae57578')
+    def test_apply_servers(self):
+        apply_servers = ApplyServers()
+        apply_servers.image_available(apply_servers.image_name)
+        apply_servers.flavor_available(apply_servers.flavor_id)
+        apply_servers.net_available(apply_servers.net_id)
+
+        if not apply_servers.volumes_name:
+            error("No volumes name, please check your "
+                  "flavor id in tempest.conf or config.py file")
+            sys.exit(1)
+        volumes_name_list = apply_servers.volumes_name
+        for volume_name in volumes_name_list:
+            apply_servers.volume_available(volume_name)
+
+        servers_name_list = apply_servers.servers_name.split(",")
+        for server_name in servers_name_list:
+            server_name = server_name.strip()
+            apply_servers.create_server(server_name,
+                                        apply_servers.image_name,
+                                        apply_servers.flavor_id,
+                                        apply_servers.net_id,
+                                        apply_servers.security_group,
+                                        apply_servers.key_name)
