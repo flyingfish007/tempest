@@ -50,13 +50,13 @@ class ApplyServers(object):
 
     """
     def __init__(self):
-        self.uri = CONF.identity.uri
-        self.auth_version = CONF.identity.auth_version
+        self.uri = CONF.vsm.openstack_auth_uri
+        self.auth_version = CONF.vsm.openstack_auth_version
         self.auth_url = self.uri + "/" + self.auth_version
-        self.region = CONF.identity.region
-        self.admin_username = CONF.identity.admin_username
-        self.admin_tenant_name = CONF.identity.admin_tenant_name
-        self.admin_password = CONF.identity.admin_password
+        self.region = CONF.vsm.openstack_region
+        self.admin_username = CONF.vsm.openstack_username
+        self.admin_tenant_name = CONF.vsm.openstack_tenant_name
+        self.admin_password = CONF.vsm.openstack_password
 
         self.novaclient = nc_client.Client(
             self.admin_username,
