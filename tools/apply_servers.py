@@ -19,25 +19,27 @@ from tempest import config
 
 try:
     from novaclient.v1_1 import client as nc_client
-except:
+except Exception:
     from novaclient.v2 import client as nc_client
 try:
     from cinderclient.v1 import client as cc_client
-except:
+except Exception:
     from cinderclient.v2 import client as cc_client
 
 CONF = config.CONF
 
+
 def error(msg):
-    print '---------------ERROR----------------'
-    print '------------------------------------'
+    print('---------------ERROR----------------')
+    print('------------------------------------')
     if isinstance(msg, list):
         for n in msg:
-            print n
+            print(n)
     else:
-        print msg
-    print '------------------------------------'
+        print(msg)
+    print('------------------------------------')
     sys.exit(1)
+
 
 class ApplyServers(object):
     """
@@ -57,7 +59,7 @@ class ApplyServers(object):
             self.admin_password,
             self.admin_tenant_name,
             self.auth_url,
-            region_name = self.region
+            region_name=self.region
         )
 
         self.cinderclient = cc_client.Client(
@@ -65,9 +67,8 @@ class ApplyServers(object):
             self.admin_password,
             self.admin_tenant_name,
             self.auth_url,
-            region_name = self.region
+            region_name=self.region
         )
-
 
         self.image_name = CONF.vsm.image_name
         self.flavor_id = CONF.vsm.flavor_id
@@ -85,13 +86,13 @@ class ApplyServers(object):
         :return:
         """
         if not image_name:
-            error("No image name, please check your image_name in tempest.conf "
-                  "or config.py file")
+            error("No image name, please check your image_name "
+                  "in tempest.conf or config.py file")
             sys.exit(1)
 
         images_list = self.novaclient.images.list()
         if image_name in [image.name for image in images_list]:
-            print "The image is available"
+            print("The image is available")
         else:
             error("Not found the image %s" % image_name)
             sys.exit(1)
@@ -103,13 +104,13 @@ class ApplyServers(object):
         :return:
         """
         if not flavor_id:
-            error("No flavor id, please check your flavor id in tempest.conf "
-                  "or config.py file")
+            error("No flavor id, please check your flavor "
+                  "id in tempest.conf or config.py file")
             sys.exit(1)
 
         flavor_list = self.novaclient.flavors.list()
         if flavor_id in [flavor.id for flavor in flavor_list]:
-            print "The flavor is available"
+            print("The flavor is available")
         else:
             error("Not found the flavor id %s" % flavor_id)
             sys.exit(1)
@@ -121,13 +122,13 @@ class ApplyServers(object):
         :return:
         """
         if not net_id:
-            error("No network id, please check your flavor id in tempest.conf "
-                  "or config.py file")
+            error("No network id, please check your flavor "
+                  "id in tempest.conf or config.py file")
             sys.exit(1)
 
         net_list = self.novaclient.networks.list()
         if net_id in [net.id for net in net_list]:
-            print "The net is available"
+            print("The net is available")
         else:
             error("Not found the net id %s" % net_id)
             sys.exit(1)
@@ -140,10 +141,10 @@ class ApplyServers(object):
         """
         volumes_list = self.cinderclient.volumes.list()
         if volume_name in [volume.name for volume in volumes_list]:
-            print "The volume is available"
+            print("The volume is available")
         else:
             error("Not found the volume %s" % volume_name)
-            print "Creating the volume %s" % volume_name
+            print("Creating the volume %s" % volume_name)
             volume_status = self.create_volume(volume_name, self.volume_size)
             count = 1
             while volume_status != "available":
@@ -152,7 +153,8 @@ class ApplyServers(object):
                     count = count + 1
                     continue
                 else:
-                    print "The volume %s is still not available, please check by yourself"
+                    print("The volume %s is still not available, "
+                          "please check by yourself" % volume_name)
                     break
 
     def create_volume(self, name, size):
@@ -179,16 +181,16 @@ class ApplyServers(object):
         :return:
         """
         if not server_name:
-            print "server name is null"
+            print("server name is null")
             sys.exit(1)
         if not image_name:
-            print "image name is null"
+            print("image name is null")
             sys.exit(1)
         if not flavor_id:
-            print "flavor id is null"
+            print("flavor id is null")
             sys.exit(1)
         if not net_id:
-            print "network id is null"
+            print("network id is null")
             sys.exit(1)
         server_list = self.novaclient.servers.list()
         if server_name in [server.name for server in server_list]:
@@ -201,19 +203,19 @@ class ApplyServers(object):
                     count = count + 1
                     continue
                 else:
-                    print "the old server has been deleted"
+                    print("the old server has been deleted")
                     break
         self.novaclient.servers.create(server_name, image_name, flavor_id,
-                                       security_groups = [security_group],
-                                       key_name = key_name,
-                                       nics = [{"net-id": net_id}])
+                                       security_groups=[security_group],
+                                       key_name=key_name,
+                                       nics=[{"net-id": net_id}])
         server_list = self.novaclient.servers.list()
         count = 1
         while count < 100:
             time.sleep(count)
             server = self.novaclient.servers.get(server_name)
             if server.status == "ACTIVE":
-                print "The server is active"
+                print("The server is active")
                 count = 100
             else:
                 count = count + 1
@@ -230,8 +232,8 @@ if __name__ == "__main__":
     apply_servers.net_available(apply_servers.net_id)
 
     if not apply_servers.volumes_name:
-        error("No volumes name, please check your flavor id in tempest.conf "
-              "or config.py file")
+        error("No volumes name, please check your "
+              "flavor id in tempest.conf or config.py file")
         sys.exit(1)
     volumes_name_list = apply_servers.volumes_name
     for volume_name in volumes_name_list:
@@ -246,4 +248,3 @@ if __name__ == "__main__":
                                     apply_servers.net_id,
                                     apply_servers.security_group,
                                     apply_servers.key_name)
-
