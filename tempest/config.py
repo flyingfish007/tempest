@@ -197,6 +197,25 @@ VsmGroup = [
     cfg.StrOpt('catalog_type',
                default='vsm',
                help="Catalog type of the VSM service."),
+    cfg.StrOpt('openstack_username',
+               help="Administrative Username to use for "
+                    "Keystone API requests."),
+    cfg.StrOpt('openstack_password',
+               help="API key to use when authenticating as admin."),
+    cfg.StrOpt('openstack_tenant_name',
+               help="Administrative Tenant name to use for Keystone API "
+                    "requests."),
+    cfg.StrOpt('openstack_auth_uri',
+               help="Full URI of the OpenStack Identity API (Keystone), v2"),
+    cfg.StrOpt('openstack_auth_version',
+               default='v2',
+               help="Identity API version to be used for authentication "
+                    "for API tests."),
+    cfg.StrOpt('openstack_region',
+               help="The openstack region name to use. If empty, the value of"
+                    "identity.region is used instead. If no such region "
+                    "is found in the service catalog, the first found "
+                    "one is used."),
     cfg.StrOpt('region',
                help="The vsm region name to use. If empty, the value of"
                     "identity.region is used instead. If no such region "
