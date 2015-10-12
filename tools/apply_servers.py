@@ -81,6 +81,9 @@ class ApplyServers(object):
         self.servers_name = CONF.get("vsm", "servers_name")
         self.security_group = CONF.get("vsm", "security_group")
         self.key_name = CONF.get("vsm", "key_name")
+        self.controller_floating_ip = CONF.get("vsm", "vsm_controller_ip")
+        self.agents_floating_ip = CONF.get("vsm", "vsm_agents_ip")
+        self.floaing_ip_list = self.agents_floating_ip.split(",").append(self.controller_floating_ip)
 
     def image_available(self, image_name):
         """
@@ -91,14 +94,12 @@ class ApplyServers(object):
         if not image_name:
             error("No image name, please check your image_name "
                   "in tempest.conf or config.py file")
-            sys.exit(1)
 
         images_list = self.novaclient.images.list()
         if image_name in [image.name for image in images_list]:
             print("The image is available")
         else:
             error("Not found the image %s" % image_name)
-            sys.exit(1)
 
     def flavor_available(self, flavor_id):
         """
@@ -109,14 +110,12 @@ class ApplyServers(object):
         if not flavor_id:
             error("No flavor id, please check your flavor "
                   "id in tempest.conf or config.py file")
-            sys.exit(1)
 
         flavor_list = self.novaclient.flavors.list()
         if flavor_id in [flavor.id for flavor in flavor_list]:
             print("The flavor is available")
         else:
             error("Not found the flavor id %s" % flavor_id)
-            sys.exit(1)
 
     def net_available(self, net_id):
         """
@@ -127,14 +126,12 @@ class ApplyServers(object):
         if not net_id:
             error("No network id, please check your flavor "
                   "id in tempest.conf or config.py file")
-            sys.exit(1)
 
         net_list = self.novaclient.networks.list()
         if net_id in [net.id for net in net_list]:
             print("The net is available")
         else:
             error("Not found the net id %s" % net_id)
-            sys.exit(1)
 
     def volume_available(self, volume_name):
         """
@@ -175,7 +172,8 @@ class ApplyServers(object):
                 return volume.status
 
     def create_server(self, server_name, image_name, flavor_id, net_id,
-                      security_group="default", key_name="demo-key"):
+                      security_group="default", key_name="demo-key",
+                      floating_ip=None):
         """
 
         :param server_name:
@@ -211,21 +209,28 @@ class ApplyServers(object):
                 else:
                     print("the old server has been deleted")
                     break
-        self.novaclient.servers.create(server_name, image_name, flavor_id,
+        images_list = self.novaclient.images.list()
+        image_id = None
+        for image in images_list:
+            if image_name == image.name:
+                image_id = image.id
+        server = self.novaclient.servers.create(server_name, image_id, flavor_id,
                                        security_groups=[security_group],
                                        key_name=key_name,
                                        nics=[{"net-id": net_id}])
-        server_list = self.novaclient.servers.list()
         count = 1
         while count < 100:
             time.sleep(count)
-            server = self.novaclient.servers.get(server_name)
+            server = self.novaclient.servers.get(server.id)
             if server.status == "ACTIVE":
                 print("The server is active")
+                print("Begin to associate floating ip to server")
+                self.novaclient.servers.add_floating_ip(server.id, floating_ip)
+                print("End to associate floating ip to server")
                 count = 100
             else:
                 count = count + 1
-                break
+                continue
 
     def attach_volume_to_server(self, volume_id, server_id):
         return
@@ -240,13 +245,17 @@ if __name__ == "__main__":
     if not apply_servers.volumes_name:
         error("No volumes name, please check your "
               "flavor id in tempest.conf or config.py file")
-        sys.exit(1)
     volumes_name = apply_servers.volumes_name
     volumes_name_list = volumes_name.split(",")
     for volume_name in volumes_name_list:
         apply_servers.volume_available(volume_name.strip(" "))
 
     servers_name_list = apply_servers.servers_name.split(",")
+    floating_ip_list = apply_servers.floaing_ip_list
+    if len(floating_ip_list) != len(servers_name_list):
+        error("The number of floating ip does not equal "
+              "servers, please check again!")
+    count = 0
     for server_name in servers_name_list:
         server_name = server_name.strip()
         apply_servers.create_server(server_name,
@@ -254,4 +263,6 @@ if __name__ == "__main__":
                                     apply_servers.flavor_id,
                                     apply_servers.net_id,
                                     apply_servers.security_group,
-                                    apply_servers.key_name)
+                                    apply_servers.key_name,
+                                    floating_ip_list[count])
+        count = count + 1
