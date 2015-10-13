@@ -12,9 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+
+import ConfigParser
 import sys
 import time
-import ConfigParser
 
 try:
     from novaclient.v1_1 import client as nc_client
@@ -31,6 +32,7 @@ if sys.argv[1]:
     CONF.read(sys.argv[1])
 else:
     CONF.read("/opt/tempest/etc/tempest.conf")
+
 
 def error(msg):
     print('---------------ERROR----------------')
@@ -83,7 +85,8 @@ class ApplyServers(object):
         self.key_name = CONF.get("vsm", "key_name")
         self.controller_floating_ip = CONF.get("vsm", "vsm_controller_ip")
         self.agents_floating_ip = CONF.get("vsm", "vsm_agents_ip")
-        self.floaing_ip_list = self.agents_floating_ip.split(",").append(self.controller_floating_ip)
+        self.floating_ip_list = self.agents_floating_ip.split(",")
+        self.floating_ip_list.append(self.controller_floating_ip)
 
     def image_available(self, image_name):
         """
@@ -214,10 +217,14 @@ class ApplyServers(object):
         for image in images_list:
             if image_name == image.name:
                 image_id = image.id
-        server = self.novaclient.servers.create(server_name, image_id, flavor_id,
-                                       security_groups=[security_group],
-                                       key_name=key_name,
-                                       nics=[{"net-id": net_id}])
+        server = self.novaclient.servers.create(
+            server_name,
+            image_id,
+            flavor_id,
+            security_groups=[security_group],
+            key_name=key_name,
+            nics=[{"net-id": net_id}]
+        )
         count = 1
         while count < 100:
             time.sleep(count)
@@ -251,7 +258,7 @@ if __name__ == "__main__":
         apply_servers.volume_available(volume_name.strip(" "))
 
     servers_name_list = apply_servers.servers_name.split(",")
-    floating_ip_list = apply_servers.floaing_ip_list
+    floating_ip_list = apply_servers.floating_ip_list
     if len(floating_ip_list) != len(servers_name_list):
         error("The number of floating ip does not equal "
               "servers, please check again!")
