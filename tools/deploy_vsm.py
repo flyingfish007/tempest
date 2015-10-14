@@ -61,26 +61,26 @@ def deploy_vsm():
     vsm_package = vsm_release_package_path.split("/")[-1]
     vsm_release_path = ".".join(vsm_package.split(".")[0:3])
     controller_ip = apply_servers.ip_list[-1]
-    agent_ip_list = ",".join(apply_servers.ip_list[0:-1])
-    os.system("echo \"\nCONTROLLER_ADDRESS=%s\"|tee -a %s" % (
+    agent_ip_list = " ".join(apply_servers.ip_list[0:-1])
+    os.system("echo '\nCONTROLLER_ADDRESS=\"%s\"'|tee -a %s" % (
         controller_ip, vsm_release_path+"/installrc"
     ))
-    os.system("echo \"AGENT_ADDRESS_LIST=%s\"|tee -a %s" % (
+    os.system("echo 'AGENT_ADDRESS_LIST=\"%s\"'|tee -a %s" % (
         agent_ip_list, vsm_release_path+"/installrc"
     ))
     os.system("sed -i \"/sleep 5/aexport https_proxy="
               "http:\/\/proxy-shz.intel.com:911\" %s" % vsm_release_path+"/install.sh")
 
-    net = ".".join(apply_servers.ip_list[0].split(".")[0:3])+".0\/24"
+    net = ".".join(apply_servers.ip_list[0].split(".")[0:3])+".0"
     cluster_manifest_example_path = vsm_release_path + \
                                     "/manifest/cluster.manifest.sample"
     server_manifest_example_path = vsm_release_path + \
                                    "/manifest/server.manifest.sample"
-    os.system("sed -i \"s/192.168.123.0*/%s/g\" %s" %
+    os.system("sed -i \"s/192.168.123.0/%s/g\" %s" %
               (net, cluster_manifest_example_path))
-    os.system("sed -i \"s/192.168.124.0*/%s/g\" %s" %
+    os.system("sed -i \"s/192.168.124.0/%s/g\" %s" %
               (net, cluster_manifest_example_path))
-    os.system("sed -i \"s/192.168.125.0*/%s/g\" %s" %
+    os.system("sed -i \"s/192.168.125.0/%s/g\" %s" %
               (net, cluster_manifest_example_path))
     os.system("echo \"[vsm_controller_ip]\"| tee %s" % server_manifest_example_path)
     os.system("echo \"%s\"| tee -a %s" % (controller_ip,server_manifest_example_path))
@@ -117,16 +117,35 @@ def deploy_vsm():
     os.system("tar -czvf %s %s" % (vsm_package, vsm_release_path))
     time.sleep(5)
     print("waiting the controller server is active!")
-    t = paramiko.Transport(apply_servers.floating_ip, 22)
-    t.connect(username=apply_servers.ssh_username,
-              password=apply_servers.ssh_password)
-    sftp = paramiko.SFTPClient.from_transport(t)
-    localpath = os.getcwd()+"/"+vsm_package
-    remotepath = "/home/intel/" + vsm_package
-    sftp.put(localpath, remotepath)
-    t.close()
+    flag = False
+    while flag == False:
+        try:
+            print("===============")
+            t = paramiko.Transport(apply_servers.floating_ip, 22)
+            flag = True
+            t.connect(username=apply_servers.ssh_username,
+                      password=apply_servers.ssh_password)
+            sftp = paramiko.SFTPClient.from_transport(t)
+            localpath = vsm_package
+            remotepath = "/home/intel/" + vsm_package
+            sftp.put(localpath, remotepath)
+            t.close()
+        except Exception:
+            flag = False
 
-    return
+    s = paramiko.SSHClient()
+    s.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    s.connect(apply_servers.floating_ip,port=22,
+              username=apply_servers.ssh_username,
+              password=apply_servers.ssh_password)
+    print("Begin to install vsm, please wait for a few minutes!")
+    stdin, stdout, stderr = s.exec_command("cd ~;tar -zxvf %s;cd %s;"
+                                           "./install.sh -v 2.0 -u intel"
+                   % (vsm_package, vsm_release_path))
+    print("out: " + stdout.read())
+    print("err: " + stderr.read())
+    s.close()
+
 
 if __name__ == "__main__":
     prepare_servers()

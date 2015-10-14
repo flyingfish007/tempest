@@ -277,7 +277,10 @@ class ApplyServers(object):
                        "sudo parted -a optimal /dev/vdc -- mkpart xfs 1MB 100%"
                 cmd3 = "echo \"deb http://192.168.1.34 vsm-dep-repo-ubuntu14/\" |" \
                        "sudo tee /etc/apt/sources.list.d/repo.list;" \
-                       "sudo rm -rf /etc/apt/apt.conf;" \
+                       "echo \"APT::Get::AllowUnauthenticated 1 ;\" |" \
+                       "sudo tee /etc/apt/apt.conf;" \
+                       "echo \"nameserver 10.248.2.5\" |" \
+                       "sudo tee /etc/resolvconf/resolv.conf.d/base;" \
                        "sudo mv /etc/apt/sources.list /etc/apt/sources.list.old;" \
                        "echo %s | sudo tee /etc/hostname;" \
                        "sudo reboot" % server_name
