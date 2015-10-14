@@ -17,6 +17,8 @@ import ConfigParser
 import sys
 import time
 
+import paramiko
+
 try:
     from novaclient.v1_1 import client as nc_client
 except Exception:
@@ -28,9 +30,9 @@ except Exception:
 
 
 CONF = ConfigParser.ConfigParser()
-if sys.argv[1]:
+try:
     CONF.read(sys.argv[1])
-else:
+except Exception:
     CONF.read("/opt/tempest/etc/tempest.conf")
 
 
@@ -58,6 +60,7 @@ class ApplyServers(object):
         self.admin_username = CONF.get("vsm", "openstack_username")
         self.admin_tenant_name = CONF.get("vsm", "openstack_tenant_name")
         self.admin_password = CONF.get("vsm", "openstack_password")
+        self.vsm_release_package_path = CONF.get("vsm", "vsm_release_package_path")
 
         self.novaclient = nc_client.Client(
             self.admin_username,
@@ -83,10 +86,11 @@ class ApplyServers(object):
         self.servers_name = CONF.get("vsm", "servers_name")
         self.security_group = CONF.get("vsm", "security_group")
         self.key_name = CONF.get("vsm", "key_name")
-        self.controller_floating_ip = CONF.get("vsm", "vsm_controller_ip")
-        self.agents_floating_ip = CONF.get("vsm", "vsm_agents_ip")
-        self.floating_ip_list = self.agents_floating_ip.split(",")
-        self.floating_ip_list.append(self.controller_floating_ip)
+        self.floating_ip = CONF.get("vsm", "floating_ip")
+
+        self.ssh_username = CONF.get("vsm", "ssh_username")
+        self.ssh_password = CONF.get("vsm", "ssh_password")
+        self.ip_list = []
 
     def image_available(self, image_name):
         """
@@ -143,22 +147,24 @@ class ApplyServers(object):
         :return:
         """
         volumes_list = self.cinderclient.volumes.list()
-        if volume_name in [volume.name for volume in volumes_list]:
-            print("The volume is available")
-        else:
-            print("Not found the volume %s" % volume_name)
-            print("Creating the volume %s" % volume_name)
-            volume_status = self.create_volume(volume_name, self.volume_size)
-            count = 1
-            while volume_status != "available":
-                if count < 6:
-                    time.sleep(count)
-                    count = count + 1
-                    continue
-                else:
-                    print("The volume %s is still not available, "
-                          "please check by yourself" % volume_name)
-                    break
+        for volume in volumes_list:
+            if volume_name == volume.name:
+                print("The volume is available")
+                return volume
+        print("Not found the volume %s" % volume_name)
+        print("Creating the volume %s" % volume_name)
+        volume = self.create_volume(volume_name, self.volume_size)
+        count = 1
+        while volume.status != "available":
+            if count < 6:
+                time.sleep(count)
+                count = count + 1
+                continue
+            else:
+                print("The volume %s is still not available, "
+                      "please check by yourself" % volume_name)
+                break
+        return volume
 
     def create_volume(self, name, size):
         """
@@ -172,11 +178,11 @@ class ApplyServers(object):
         volumes = self.cinderclient.volumes.list()
         for volume in volumes:
             if name == volume.name:
-                return volume.status
+                return volume
 
     def create_server(self, server_name, image_name, flavor_id, net_id,
                       security_group="default", key_name="demo-key",
-                      floating_ip=None):
+                      floating_ip=None, volume_list=None):
         """
 
         :param server_name:
@@ -200,18 +206,22 @@ class ApplyServers(object):
             print("network id is null")
             sys.exit(1)
         server_list = self.novaclient.servers.list()
-        if server_name in [server.name for server in server_list]:
-            self.novaclient.servers.delete(server_name)
-            server_list = self.novaclient.servers.list()
-            count = 1
-            while count < 6:
-                time.sleep(count)
-                if server_name in [server.name for server in server_list]:
-                    count = count + 1
-                    continue
-                else:
-                    print("the old server has been deleted")
-                    break
+        for server in server_list:
+            if server.name == server_name:
+                print("Begin to delete %s" % server_name)
+                self.novaclient.servers.delete(server.id)
+                count = 1
+                while count < 100:
+                    time.sleep(count)
+                    print("waiting %s seconds to delete server %s" % (count,server_name))
+                    server_list = self.novaclient.servers.list()
+                    if server_name in [server.name for server in server_list]:
+                        count = count + 1
+                        continue
+                    else:
+                        print("the old server has been deleted")
+                        break
+                print("End to delete")
         images_list = self.novaclient.images.list()
         image_id = None
         for image in images_list:
@@ -227,6 +237,7 @@ class ApplyServers(object):
         )
         count = 1
         while count < 100:
+            print("waiting %s seconds to create server %s" % (count, server_name))
             time.sleep(count)
             server = self.novaclient.servers.get(server.id)
             if server.status == "ACTIVE":
@@ -234,13 +245,90 @@ class ApplyServers(object):
                 print("Begin to associate floating ip to server")
                 self.novaclient.servers.add_floating_ip(server.id, floating_ip)
                 print("End to associate floating ip to server")
-                count = 100
+                print("Begin to attach volume")
+                for volume_name in volume_list:
+                    volume = self.volume_available(volume_name)
+                    self.novaclient.volumes.create_server_volume(
+                        server.id,
+                        volume.id,
+                        None
+                    )
+                print("End to attach volume")
+                # os.system("fab -u %s -p %s -f ./tools/config_server.py "
+                #           "-H %s normal_user_sudo" % (self.ssh_username,
+                #                                       self.ssh_password,
+                #                                       self.floating_ip))
+                print("Please login %s as intel, and run the command as followed: "
+                      "echo \"intel ALL=(ALL) NOPASSWD: ALL\" | "
+                      "sudo tee /etc/sudoers.d/intel;"
+                      "sudo chmod 0440 /etc/sudoers.d/intel;"
+                      "ssh-keygen -t rsa" % floating_ip)
+
+                result = raw_input("If ready, please input \"y\" to continue")
+                while result != "y":
+                    print("wrong input, please input again")
+                    result = raw_input("If ready, please input \"y\" to continue")
+
+                cmd1 = "ifconfig eth0|grep \"inet addr\"|awk -F \" \" " \
+                       "'{print $2}'|awk -F \":\" '{print $2}'"
+                cmd2 = "sudo parted /dev/vdb -- mklabel gpt;" \
+                       "sudo parted /dev/vdc -- mklabel gpt;" \
+                       "sudo parted -a optimal /dev/vdb -- mkpart xfs 1MB 100%;" \
+                       "sudo parted -a optimal /dev/vdc -- mkpart xfs 1MB 100%"
+                cmd3 = "echo \"deb http://192.168.1.34 vsm-dep-repo-ubuntu14/\" |" \
+                       "sudo tee /etc/apt/sources.list.d/repo.list;" \
+                       "sudo rm -rf /etc/apt/apt.conf;" \
+                       "sudo mv /etc/apt/sources.list /etc/apt/sources.list.old;" \
+                       "echo %s | sudo tee /etc/hostname;" \
+                       "sudo reboot" % server_name
+                ip = self.config_server(floating_ip, cmd1)
+                print(ip.replace("\n",""))
+                self.ip_list.append(ip.replace("\n",""))
+                self.config_server(floating_ip, cmd2)
+
+                if len(self.ip_list) == len(self.servers_name.split(",")):
+                    ip_str = ",".join(self.ip_list)
+                    CONF.set("vsm", ip_str)
+                    i = 0
+                    servers_name_list = self.servers_name.split(",")
+                    while i < len(self.servers_name.split(",")):
+                        cmd = "echo \"%s  %s\" | sudo tee -a /etc/hosts" % (
+                            self.ip_list[i], servers_name_list[i].strip(" ")
+                        )
+                        self.config_server(floating_ip, cmd)
+                        i = i + 1
+                    for ip in self.ip_list:
+                        print("Please login %s as intel, and run commands: "
+                              "ssh-copy-id %s" % (self.floating_ip, ip))
+                    result = raw_input("If all ready, please input \"y\" to continue")
+                    while result != "y":
+                        print("wrong input, please input again")
+                        result = raw_input("If all ready, please input \"y\" to continue")
+                self.config_server(floating_ip, cmd3)
+
+                break
             else:
                 count = count + 1
                 continue
 
     def attach_volume_to_server(self, volume_id, server_id):
         return
+
+    def config_server(self, ip, cmd):
+        hostname_or_ip = ip
+        port = 22
+        username = self.ssh_username
+        password = self.ssh_password
+        print(hostname_or_ip, port, username, password)
+
+        s = paramiko.SSHClient()
+        s.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        s.connect(hostname_or_ip,port=port,username=username,
+                  password=password)
+        stdin, stdout, stderr = s.exec_command(cmd)
+        result = stdout.read()
+        s.close()
+        return result
 
 
 if __name__ == "__main__":
@@ -254,15 +342,13 @@ if __name__ == "__main__":
               "flavor id in tempest.conf or config.py file")
     volumes_name = apply_servers.volumes_name
     volumes_name_list = volumes_name.split(",")
-    for volume_name in volumes_name_list:
-        apply_servers.volume_available(volume_name.strip(" "))
 
     servers_name_list = apply_servers.servers_name.split(",")
-    floating_ip_list = apply_servers.floating_ip_list
-    if len(floating_ip_list) != len(servers_name_list):
-        error("The number of floating ip does not equal "
-              "servers, please check again!")
+    if len(volumes_name_list) != len(servers_name_list)*2:
+        error("Please check the volume config "
+              "each agent has two volumes!")
     count = 0
+    floating_ip = apply_servers.floating_ip
     for server_name in servers_name_list:
         server_name = server_name.strip()
         apply_servers.create_server(server_name,
@@ -271,5 +357,7 @@ if __name__ == "__main__":
                                     apply_servers.net_id,
                                     apply_servers.security_group,
                                     apply_servers.key_name,
-                                    floating_ip_list[count])
-        count = count + 1
+                                    floating_ip,
+                                    volumes_name_list[count:count+2])
+        count = count + 2
+    print apply_servers.ip_list
