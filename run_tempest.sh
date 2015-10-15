@@ -147,8 +147,8 @@ echo "==================================="
 if [ $apply_servers -eq 1 ]
 then
   # Apply new servers for vsm nodes
-  echo -e "Apply new servers for vsm nodes"
-  python tools/apply_servers.py
+  echo -e "Apply new servers for vsm nodes and deploy vsm"
+  python tools/deploy_vsm.py
 fi
 
 

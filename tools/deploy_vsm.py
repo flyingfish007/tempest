@@ -139,11 +139,23 @@ def deploy_vsm():
               username=apply_servers.ssh_username,
               password=apply_servers.ssh_password)
     print("Begin to install vsm, please wait for a few minutes!")
+    print("Install controller %s ..." % controller_ip)
     stdin, stdout, stderr = s.exec_command("cd ~;tar -zxvf %s;cd %s;"
-                                           "./install.sh -v 2.0 -u intel"
-                   % (vsm_package, vsm_release_path))
+                                           "./install.sh -v 2.0 -u intel "
+                                           "--controller %s"
+                   % (vsm_package, vsm_release_path, controller_ip))
     print("out: " + stdout.read())
     print("err: " + stderr.read())
+
+    for ip in apply_servers.ip_list[0:-1]:
+        print("Install agent %s ..." % ip)
+        stdin, stdout, stderr = s.exec_command("cd ~/%s;"
+                                               "./install.sh -v 2.0 -u intel "
+                                               "--agent %s"
+                                               % (vsm_release_path, ip))
+        print("out: " + stdout.read())
+        print("err: " + stderr.read())
+
     s.close()
 
 

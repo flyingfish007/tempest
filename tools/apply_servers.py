@@ -254,10 +254,6 @@ class ApplyServers(object):
                         None
                     )
                 print("End to attach volume")
-                # os.system("fab -u %s -p %s -f ./tools/config_server.py "
-                #           "-H %s normal_user_sudo" % (self.ssh_username,
-                #                                       self.ssh_password,
-                #                                       self.floating_ip))
                 print("Please login %s as intel, and run the command as followed: "
                       "echo \"intel ALL=(ALL) NOPASSWD: ALL\" | "
                       "sudo tee /etc/sudoers.d/intel;"
