@@ -142,7 +142,7 @@ def deploy_vsm():
     print("Install controller %s ..." % controller_ip)
     stdin, stdout, stderr = s.exec_command("cd ~;tar -zxvf %s;cd %s;"
                                            "./install.sh -v 2.0 -u intel "
-                                           "--controller %s"
+                                           "--prepare --controller %s"
                    % (vsm_package, vsm_release_path, controller_ip))
     print("out: " + stdout.read())
     print("err: " + stderr.read())
