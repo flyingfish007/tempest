@@ -61,7 +61,8 @@ class ApplyServers(object):
         self.admin_username = CONF.get("vsm", "openstack_username")
         self.admin_tenant_name = CONF.get("vsm", "openstack_tenant_name")
         self.admin_password = CONF.get("vsm", "openstack_password")
-        self.vsm_release_package_path = CONF.get("vsm", "vsm_release_package_path")
+        self.vsm_release_package_path = CONF.get("vsm",
+                                                 "vsm_release_package_path")
 
         self.novaclient = nc_client.Client(
             self.admin_username,
@@ -214,7 +215,8 @@ class ApplyServers(object):
                 count = 1
                 while count < 100:
                     time.sleep(count)
-                    print("waiting %s seconds to delete server %s" % (count,server_name))
+                    print("waiting %s seconds to delete server %s" %
+                          (count, server_name))
                     server_list = self.novaclient.servers.list()
                     if server_name in [server.name for server in server_list]:
                         count = count + 1
@@ -238,7 +240,8 @@ class ApplyServers(object):
         )
         count = 1
         while count < 100:
-            print("waiting %s seconds to create server %s" % (count, server_name))
+            print("waiting %s seconds to create server %s" %
+                  (count, server_name))
             time.sleep(count)
             server = self.novaclient.servers.get(server.id)
             if server.status == "ACTIVE":
@@ -265,25 +268,27 @@ class ApplyServers(object):
                 flag = True
                 while flag:
                     try:
-                        ssh=pexpect.spawn('ssh -t %s@%s \'echo "%s ALL=(ALL) NOPASSWD: ALL" '
-                                          '| sudo tee /etc/sudoers.d/%s\'' %
-                                          (self.ssh_username, self.floating_ip,
-                                           self.ssh_username, self.ssh_username))
+                        ssh = pexpect.spawn(
+                            'ssh -t %s@%s \'echo "%s ALL=(ALL) NOPASSWD: ALL" '
+                            '| sudo tee /etc/sudoers.d/%s\'' %
+                            (self.ssh_username, self.floating_ip,
+                             self.ssh_username, self.ssh_username))
                         ssh.expect("password")
                         ssh.sendline(self.ssh_password)
                         ssh.expect("password")
                         ssh.sendline(self.ssh_password)
                         flag = False
                     except Exception:
-                        print("Waiting for 10 seconds that floating ip is not ready...")
+                        print("Waiting for 10 seconds that "
+                              "floating ip is not ready...")
                         time.sleep(10)
 
                 self.config_server(self.floating_ip,
                                    "sudo chmod 0440 /etc/sudoers.d/%s"
                                    % self.ssh_username)
                 print("Generate ssh-key for user %s" % self.ssh_username)
-                ssh=pexpect.spawn('ssh -t %s@%s \'ssh-keygen -t rsa\''
-                                  % (self.ssh_username, self.floating_ip))
+                ssh = pexpect.spawn('ssh -t %s@%s \'ssh-keygen -t rsa\''
+                                    % (self.ssh_username, self.floating_ip))
                 ssh.expect("password")
                 ssh.sendline(self.ssh_password)
                 print(1)
@@ -312,8 +317,8 @@ class ApplyServers(object):
                        "echo %s | sudo tee /etc/hostname;" \
                        "sudo reboot" % server_name
                 ip = self.config_server(floating_ip, cmd1)
-                print(ip.replace("\n",""))
-                self.ip_list.append(ip.replace("\n",""))
+                print(ip.replace("\n", ""))
+                self.ip_list.append(ip.replace("\n", ""))
                 self.config_server(floating_ip, cmd2)
 
                 if len(self.ip_list) == len(self.servers_name.split(",")):
@@ -329,9 +334,9 @@ class ApplyServers(object):
                         i = i + 1
                     for ip in self.ip_list:
                         print("xtrust between controller and %s" % ip)
-                        ssh=pexpect.spawn('ssh -t %s@%s \'ssh-copy-id %s\''
-                                          % (self.ssh_username, self.floating_ip,
-                                             ip))
+                        ssh = pexpect.spawn('ssh -t %s@%s \'ssh-copy-id %s\''
+                                            % (self.ssh_username,
+                                               self.floating_ip, ip))
                         ssh.expect("password")
                         ssh.sendline(self.ssh_password)
                         ssh.expect("yes/no")
@@ -357,7 +362,7 @@ class ApplyServers(object):
 
         s = paramiko.SSHClient()
         s.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        s.connect(hostname_or_ip,port=port,username=username,
+        s.connect(hostname_or_ip, port=port, username=username,
                   password=password)
         stdin, stdout, stderr = s.exec_command(cmd)
         result = stdout.read()
@@ -378,7 +383,7 @@ if __name__ == "__main__":
     volumes_name_list = volumes_name.split(",")
 
     servers_name_list = apply_servers.servers_name.split(",")
-    if len(volumes_name_list) != len(servers_name_list)*2:
+    if len(volumes_name_list) != len(servers_name_list) * 2:
         error("Please check the volume config "
               "each agent has two volumes!")
     count = 0
@@ -392,6 +397,6 @@ if __name__ == "__main__":
                                     apply_servers.security_group,
                                     apply_servers.key_name,
                                     floating_ip,
-                                    volumes_name_list[count:count+2])
+                                    volumes_name_list[count:count + 2])
         count = count + 2
-    print apply_servers.ip_list
+    print(apply_servers.ip_list)
