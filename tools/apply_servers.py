@@ -18,6 +18,7 @@ import sys
 import time
 
 import paramiko
+import pexpect
 
 try:
     from novaclient.v1_1 import client as nc_client
@@ -254,16 +255,46 @@ class ApplyServers(object):
                         None
                     )
                 print("End to attach volume")
-                print("Please login %s as intel, and run the command as followed: "
-                      "echo \"intel ALL=(ALL) NOPASSWD: ALL\" | "
-                      "sudo tee /etc/sudoers.d/intel;"
-                      "sudo chmod 0440 /etc/sudoers.d/intel;"
-                      "ssh-keygen -t rsa" % floating_ip)
 
-                result = raw_input("If ready, please input \"y\" to continue")
-                while result != "y":
-                    print("wrong input, please input again")
-                    result = raw_input("If ready, please input \"y\" to continue")
+                print("Set NOPASSWD for user %s" % self.ssh_username)
+                # self.config_server(self.floating_ip,
+                #                    "echo \"%s ALL=(ALL) NOPASSWD: ALL\" | "
+                #                    "sudo tee /etc/sudoers.d/%s"
+                #                    % (self.ssh_username, self.ssh_username),
+                #                    self.ssh_password)
+                flag = True
+                while flag:
+                    try:
+                        ssh=pexpect.spawn('ssh -t %s@%s \'echo "%s ALL=(ALL) NOPASSWD: ALL" '
+                                          '| sudo tee /etc/sudoers.d/%s\'' %
+                                          (self.ssh_username, self.floating_ip,
+                                           self.ssh_username, self.ssh_username))
+                        ssh.expect("password")
+                        ssh.sendline(self.ssh_password)
+                        ssh.expect("password")
+                        ssh.sendline(self.ssh_password)
+                        flag = False
+                    except Exception:
+                        print("Waiting for 10 seconds that floating ip is not ready...")
+                        time.sleep(10)
+
+                self.config_server(self.floating_ip,
+                                   "sudo chmod 0440 /etc/sudoers.d/%s"
+                                   % self.ssh_username)
+                print("Generate ssh-key for user %s" % self.ssh_username)
+                ssh=pexpect.spawn('ssh -t %s@%s \'ssh-keygen -t rsa\''
+                                  % (self.ssh_username, self.floating_ip))
+                ssh.expect("password")
+                ssh.sendline(self.ssh_password)
+                print(1)
+                ssh.expect("Enter file")
+                ssh.sendline("")
+                print(2)
+                ssh.expect("Enter passphrase")
+                ssh.sendline("")
+                print(3)
+                ssh.expect("Enter same passphrase")
+                ssh.sendline("")
 
                 cmd1 = "ifconfig eth0|grep \"inet addr\"|awk -F \" \" " \
                        "'{print $2}'|awk -F \":\" '{print $2}'"
@@ -297,12 +328,16 @@ class ApplyServers(object):
                         self.config_server(floating_ip, cmd)
                         i = i + 1
                     for ip in self.ip_list:
-                        print("Please login %s as intel, and run commands: "
-                              "ssh-copy-id %s" % (self.floating_ip, ip))
-                    result = raw_input("If all ready, please input \"y\" to continue")
-                    while result != "y":
-                        print("wrong input, please input again")
-                        result = raw_input("If all ready, please input \"y\" to continue")
+                        print("xtrust between controller and %s" % ip)
+                        ssh=pexpect.spawn('ssh -t %s@%s \'ssh-copy-id %s\''
+                                          % (self.ssh_username, self.floating_ip,
+                                             ip))
+                        ssh.expect("password")
+                        ssh.sendline(self.ssh_password)
+                        ssh.expect("yes/no")
+                        ssh.sendline("yes")
+                        ssh.expect("password")
+                        ssh.sendline(self.ssh_password)
                 self.config_server(floating_ip, cmd3)
 
                 break

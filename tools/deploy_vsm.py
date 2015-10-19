@@ -127,7 +127,7 @@ def deploy_vsm():
                       password=apply_servers.ssh_password)
             sftp = paramiko.SFTPClient.from_transport(t)
             localpath = vsm_package
-            remotepath = "/home/intel/" + vsm_package
+            remotepath = "/tmp/" + vsm_package
             sftp.put(localpath, remotepath)
             t.close()
         except Exception:
@@ -140,19 +140,21 @@ def deploy_vsm():
               password=apply_servers.ssh_password)
     print("Begin to install vsm, please wait for a few minutes!")
     print("Install controller %s ..." % controller_ip)
-    stdin, stdout, stderr = s.exec_command("cd ~;tar -zxvf %s;cd %s;"
-                                           "./install.sh -v 2.0 -u intel "
+    stdin, stdout, stderr = s.exec_command("cd /tmp;tar -zxvf %s;cd %s;"
+                                           "./install.sh -v 2.0 -u %s "
                                            "--prepare --controller %s"
-                   % (vsm_package, vsm_release_path, controller_ip))
+                   % (vsm_package, vsm_release_path,
+                      apply_servers.ssh_username, controller_ip))
     print("out: " + stdout.read())
     print("err: " + stderr.read())
 
     for ip in apply_servers.ip_list[0:-1]:
         print("Install agent %s ..." % ip)
-        stdin, stdout, stderr = s.exec_command("cd ~/%s;"
-                                               "./install.sh -v 2.0 -u intel "
+        stdin, stdout, stderr = s.exec_command("cd /tmp/%s;"
+                                               "./install.sh -v 2.0 -u %s "
                                                "--agent %s"
-                                               % (vsm_release_path, ip))
+                                               % (apply_servers.ssh_username,
+                                                  vsm_release_path, ip))
         print("out: " + stdout.read())
         print("err: " + stderr.read())
 
