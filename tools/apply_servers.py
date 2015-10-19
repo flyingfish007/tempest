@@ -343,6 +343,7 @@ class ApplyServers(object):
                         ssh.sendline("yes")
                         ssh.expect("password")
                         ssh.sendline(self.ssh_password)
+                        time.sleep(1)
                 self.config_server(floating_ip, cmd3)
 
                 break

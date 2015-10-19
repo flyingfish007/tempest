@@ -28,6 +28,10 @@ class ClustersTestJSON(base.BaseVSMAdminTest):
         super(ClustersTestJSON, cls).setup_clients()
         cls.client = cls.os_adm.clusters_client
 
+    @test.idempotent_id('b69103ea-56a8-4410-9484-aa940e4bd276')
+    def test_create_clusters(self):
+        self.client.create_cluster()
+
     @test.idempotent_id('087acd2f-ce75-48e4-9b0b-a82c9ae57578')
     def test_list_clusters(self):
         clusters = self.client.list_clusters()

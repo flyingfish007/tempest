@@ -21,6 +21,15 @@ from tempest.common import service_client
 
 class ClustersClient(service_client.ServiceClient):
 
+    def create_cluster(self, params=None):
+        post_body = json.dumps(
+            {"is_storage": 1, "is_monitor": 1, "id": "1"},
+            {"is_storage": 1, "is_monitor": 1, "id": "2"},
+            {"is_storage": 1, "is_monitor": 1, "id": "3"}
+        )
+        resp, body = self.post("clusters", post_body)
+        print(resp, body)
+
     def list_clusters(self, params=None):
         url = "clusters"
 
