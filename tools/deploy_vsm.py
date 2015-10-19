@@ -141,6 +141,7 @@ def deploy_vsm():
             t.close()
             break
         except Exception:
+            time.sleep(5)
             continue
 
     s = paramiko.SSHClient()
