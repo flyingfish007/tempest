@@ -165,8 +165,9 @@ def deploy_vsm():
         stdin, stdout, stderr = s.exec_command("cd /tmp/%s;"
                                                "./install.sh -v 2.0 -u %s "
                                                "--agent %s"
-                                               % (apply_servers.ssh_username,
-                                                  vsm_release_path, ip))
+                                               % (vsm_release_path,
+                                                  apply_servers.ssh_username,
+                                                  ip))
         print("out: " + stdout.read())
         print("err: " + stderr.read())
 
