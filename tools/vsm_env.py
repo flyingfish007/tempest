@@ -158,6 +158,15 @@ class ApplyServers(object):
         return volume
 
     def create_volume(self, volume_name, volume_size):
+        """
+
+        :param volume_name
+        :type: string
+        :param volume_size
+        :type: int
+        :return volume
+        :rtype: object
+        """
         self.cinderclient.volumes.create(volume_size, display_name=volume_name)
         time.sleep(2)
         wait_time = 1
@@ -173,6 +182,15 @@ class ApplyServers(object):
               "please check volume by yourself")
 
     def run_command_remote_server(self, ip, cmd):
+        """
+
+        :param ip
+        :type: string
+        :param cmd
+        :type: string
+        :return
+        :rtype: string
+        """
         hostname_or_ip = ip
         port = 22
         username = self.ssh_username
@@ -191,6 +209,29 @@ class ApplyServers(object):
     def create_server(self, server_name, image_name, flavor_id, net_id,
                       security_group="default", key_name="demo-key",
                       floating_ip=None, volume_size=None, volumes_list=None):
+        """
+
+        :param server name
+        :type: string
+        :param image name
+        :type: string
+        :param flavor id
+        :type: string
+        :param net id
+        :type: string
+        :param security group
+        :type: string
+        :param key name
+        :type: string
+        :param floating ip
+        :type: string
+        :param volume size
+        :type: int
+        :param volume list
+        :type: list
+        :return
+        :rtype
+        """
         if not server_name:
             error("Server name is null")
 
