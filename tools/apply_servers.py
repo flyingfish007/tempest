@@ -381,13 +381,12 @@ if __name__ == "__main__":
         error("No volumes name, please check your "
               "flavor id in tempest.conf or config.py file")
     volumes_name = apply_servers.volumes_name
-    volumes_name_list = volumes_name.split(",")
+    volumes = volumes_name.split(",")
 
     servers_name_list = apply_servers.servers_name.split(",")
-    if len(volumes_name_list) != len(servers_name_list) * 2:
+    if len(volumes) != len(servers_name_list) * 2:
         error("Please check the volume config "
               "each agent has two volumes!")
-    count = 0
     floating_ip = apply_servers.floating_ip
     for server_name in servers_name_list:
         server_name = server_name.strip()
@@ -398,6 +397,5 @@ if __name__ == "__main__":
                                     apply_servers.security_group,
                                     apply_servers.key_name,
                                     floating_ip,
-                                    volumes_name_list[count:count + 2])
-        count = count + 2
+                                    [volumes.pop(0), volumes.pop(0)])
     print(apply_servers.ip_list)

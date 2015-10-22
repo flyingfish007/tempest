@@ -197,6 +197,16 @@ VsmGroup = [
     cfg.StrOpt('catalog_type',
                default='vsm',
                help="Catalog type of the VSM service."),
+    cfg.StrOpt('region',
+               help="The vsm region name to use. If empty, the value of"
+                    "identity.region is used instead. If no such region "
+                    "is found in the service catalog, the first found "
+                    "one is used."),
+    cfg.StrOpt('endpoint_type',
+               default="publicURL",
+               help="The endpoint type to use for the vsm service."
+                    "Allowed values: public, admin, internal, publicURL, "
+                    "adminURL, internalURL"),
     cfg.StrOpt('openstack_username',
                help="Administrative Username to use for "
                     "Keystone API requests."),
@@ -216,21 +226,11 @@ VsmGroup = [
                     "identity.region is used instead. If no such region "
                     "is found in the service catalog, the first found "
                     "one is used."),
-    cfg.StrOpt('region',
-               help="The vsm region name to use. If empty, the value of"
-                    "identity.region is used instead. If no such region "
-                    "is found in the service catalog, the first found "
-                    "one is used."),
-    cfg.StrOpt('endpoint_type',
-               default="publicURL",
-               help="The endpoint type to use for the vsm service."
-                    "Allowed values: public, admin, internal, publicURL, "
-                    "adminURL, internalURL"),
     cfg.StrOpt('image_name',
                default="ubuntu14.4",
                help="The image is used to create servers for vsm."),
     cfg.StrOpt('flavor_id',
-               default="1",
+               default="07ddf27b-51c1-4ca7-ad87-29839f9f6321",
                help="The id of flavor."),
     cfg.ListOpt('volumes_name',
                 default=["test-volume1", "test-volume2", "test-volume3",
@@ -244,7 +244,7 @@ VsmGroup = [
                default="699171cb-4d05-476d-995b-69f2d511e247",
                help="The id of network."),
     cfg.ListOpt('servers_name',
-                default=["test-node1", "test-node2"
+                default=["test-node1", "test-node2",
                          "test-node3", "test-controller"],
                 help="The list of servers name"),
     cfg.StrOpt('floating_ip',
@@ -264,7 +264,11 @@ VsmGroup = [
                help="The password of ssh user name"),
     cfg.StrOpt('vsm_release_package_path',
                default="/opt/tempest/tools/2.0.0-216.tar.gz",
-               help="The release package of vsm")
+               help="The release package of vsm"),
+    cfg.IntOpt('timeout',
+               default=180,
+               help="Timeout in seconds to wait for ping to "
+                    "succeed.")
 ]
 
 compute_group = cfg.OptGroup(name='compute',
