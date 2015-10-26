@@ -286,10 +286,13 @@ class ApplyServers(object):
                             '| sudo tee /etc/sudoers.d/%s\'' %
                             (self.ssh_username, floating_ip,
                              self.ssh_username, self.ssh_username))
-                        ssh.expect("Are you sure you want to continue connecting")
-                        ssh.sendline("yes")
-                        ssh.expect("password")
-                        ssh.sendline(self.ssh_password)
+                        index = ssh.expect(["continue connecting", "password"])
+                        if index == 0:
+                            ssh.sendline("yes")
+                            ssh.expect("password")
+                            ssh.sendline(self.ssh_password)
+                        else:
+                            ssh.sendline(self.ssh_password)
                         ssh.expect("password")
                         ssh.sendline(self.ssh_password)
                         break
@@ -491,12 +494,15 @@ class DeployVSM(object):
 
         s.close()
 
-    def config_tempest(self, ip):
-        t = paramiko.Transport((ip, 22))
+    def config_tempest(self):
+        t = paramiko.Transport((self.floating_ip, 22))
         t.connect(username=self.ssh_username, password=self.ssh_password)
         sftp = paramiko.SFTPClient.from_transport(t)
-        remotepath = "~/keyrc"
-        localpath = "./keyrc"
+        if self.ssh_username == "root":
+            remotepath = "/root/keyrc"
+        else:
+            remotepath = "/home/%s/keyrc" % self.ssh_username
+        localpath = "/tmp/keyrc"
         sftp.put(localpath, remotepath)
         t.close()
 
@@ -506,8 +512,9 @@ class DeployVSM(object):
                     line = line.replace(oldstr, newstr)
                 print line,
 
-        tempest_conf = "./etc/tempest.conf"
-        file = open("./keyrc")
+        cwd = os.getcwd()
+        tempest_conf = "%s/etc/tempest.conf" % cwd
+        file = open("/tmp/keyrc")
         line = file.readline()
         if line:
             os_tenant_name = line.strip("\n").split(" ")[1].split("=")[1]
@@ -585,6 +592,7 @@ def main():
 
     deploy_vsm = DeployVSM()
     deploy_vsm.deploy_vsm(apply_servers.fixed_ip_list)
+    deploy_vsm.config_tempest()
 
 
 if __name__ == "__main__":
