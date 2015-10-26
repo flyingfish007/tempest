@@ -211,16 +211,11 @@ class ApplyServers(object):
                       floating_ip=None, volume_size=None, volumes_list=None):
         """
 
-        :param server name
-        :type: string
-        :param image name
-        :type: string
-        :param flavor id
-        :type: string
-        :param net id
-        :type: string
-        :param security group
-        :type: string
+        :param str server_name: Server Name
+        :param str image_name: Image Name
+        :param str flavor_id: Flavor ID
+        :param str net_id: Network ID
+        :param str security_group: Security Group
         :param key name
         :type: string
         :param floating ip
