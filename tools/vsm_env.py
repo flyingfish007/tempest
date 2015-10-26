@@ -503,7 +503,7 @@ class DeployVSM(object):
         else:
             remotepath = "/home/%s/keyrc" % self.ssh_username
         localpath = "/tmp/keyrc"
-        sftp.put(localpath, remotepath)
+        sftp.get(remotepath, localpath)
         t.close()
 
         def _replaceInFile(file, oldstr, newstr):
