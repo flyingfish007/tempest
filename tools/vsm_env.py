@@ -80,10 +80,8 @@ class ApplyServers(object):
     def image_available(self, image_name):
         """
 
-        :param image_name
-        :type: string
-        :return: image
-        :rtype: object
+        :param str image_name: Image Name
+        :return object image: Image Object
         """
         if not image_name:
             error("Image name is null, please check your image_name "
@@ -100,10 +98,8 @@ class ApplyServers(object):
     def flavor_available(self, flavor_id):
         """
 
-        :param flavor_id
-        :type: string
-        :return: flavor
-        :rtype: object
+        :param str flavor_id: Flavor ID
+        :return object flavor: Flavor Object
         """
         if not flavor_id:
             error("Flavor id is null, please check your flavor id "
@@ -121,10 +117,8 @@ class ApplyServers(object):
     def net_available(self, net_id):
         """
 
-        :param net_id
-        :type: string
-        :return: net
-        :rtype: object
+        :param str net_id: Network ID
+        :return object net: Network Objeck
         """
         if not net_id:
             error("Network id is null, please check your net id "
@@ -142,10 +136,9 @@ class ApplyServers(object):
     def volume_available(self, volume_name, volume_size):
         """
 
-        :param volume_name
-        :type: string
-        :return: volume
-        :rtype: object
+        :param str volume_name: Volume Name
+        :param int volume_size: Volume Size
+        :return object volume: Volume Object
         """
         volumes_list = self.cinderclient.volumes.list()
         for volume in volumes_list:
@@ -160,12 +153,9 @@ class ApplyServers(object):
     def create_volume(self, volume_name, volume_size):
         """
 
-        :param volume_name
-        :type: string
-        :param volume_size
-        :type: int
-        :return volume
-        :rtype: object
+        :param str volume_name: Volume Name
+        :param int volume_size: Volume Size
+        :return object volume: Volume Object
         """
         self.cinderclient.volumes.create(volume_size, display_name=volume_name)
         time.sleep(2)
@@ -184,12 +174,9 @@ class ApplyServers(object):
     def run_command_remote_server(self, ip, cmd):
         """
 
-        :param ip
-        :type: string
-        :param cmd
-        :type: string
+        :param str ip: Remote IP to connect
+        :param str cmd: Execute command
         :return
-        :rtype: string
         """
         hostname_or_ip = ip
         port = 22
@@ -216,16 +203,11 @@ class ApplyServers(object):
         :param str flavor_id: Flavor ID
         :param str net_id: Network ID
         :param str security_group: Security Group
-        :param key name
-        :type: string
-        :param floating ip
-        :type: string
-        :param volume size
-        :type: int
-        :param volume list
-        :type: list
+        :param str key_name: Key Name
+        :param str floating_ip: Floating IP
+        :param int volume size: Volume Size
+        :param list volume list: Volume List
         :return
-        :rtype
         """
         if not server_name:
             error("Server name is null")
@@ -304,6 +286,8 @@ class ApplyServers(object):
                             '| sudo tee /etc/sudoers.d/%s\'' %
                             (self.ssh_username, floating_ip,
                              self.ssh_username, self.ssh_username))
+                        ssh.expect("Are you sure you want to continue connecting")
+                        ssh.sendline("yes")
                         ssh.expect("password")
                         ssh.sendline(self.ssh_password)
                         ssh.expect("password")
