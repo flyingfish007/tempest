@@ -145,8 +145,9 @@ from tempest.services.volume.v2.json.qos_client import QosSpecsV2Client
 from tempest.services.volume.v2.json.snapshots_client import \
     SnapshotsV2Client
 from tempest.services.volume.v2.json.volumes_client import VolumesV2Client
-from tempest.services.vsm.json.clusters_client import ClustersClient
+from tempest.services.vsm.json.clusters_client import ClustersClient as VSMClustersClient
 from tempest.services.vsm.json.servers_client import ServersClient as VSMServersClient
+from tempest.services.vsm.json.appnodes_client import AppnodesClient as VSMAppnodesClient
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -176,7 +177,7 @@ class Manager(manager.Manager):
     def __init__(self, credentials=None, service=None):
         super(Manager, self).__init__(credentials=credentials)
 
-        self.__set_vsm_clients()
+        self._set_vsm_clients()
         self._set_compute_clients()
         self._set_database_clients()
         self._set_identity_clients()
@@ -252,14 +253,15 @@ class Manager(manager.Manager):
             self.ec2api_client = botoclients.APIClientEC2(self.identity_client)
             self.s3_client = botoclients.ObjectClientS3(self.identity_client)
 
-    def __set_vsm_clients(self):
+    def _set_vsm_clients(self):
         params = {
             'service': CONF.vsm.catalog_type,
             'region': CONF.vsm.region or CONF.identity.region,
             'endpoint_type': CONF.vsm.endpoint_type
         }
-        self.clusters_client = ClustersClient(self.auth_provider, **params)
-        self.servers_client = VSMServersClient(self.auth_provider, **params)
+        self.vsm_clusters_client = VSMClustersClient(self.auth_provider, **params)
+        self.vsm_servers_client = VSMServersClient(self.auth_provider, **params)
+        self.vsm_appnodes_client = VSMAppnodesClient(self.auth_provider, **params)
 
     def _set_compute_clients(self):
         params = {

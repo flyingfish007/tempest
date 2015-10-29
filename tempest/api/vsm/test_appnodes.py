@@ -21,21 +21,21 @@ from tempest import test
 LOG = log.getLogger(__name__)
 
 
-class ServersTestJSON(base.BaseVSMAdminTest):
+class AppnodessTestJSON(base.BaseVSMAdminTest):
 
     """
 
-    Test servers API using admin privileges.
+    Tests appnodes API using admin privileges.
     """
 
     @classmethod
     def setup_clients(cls):
-        super(ServersTestJSON, cls).setup_clients()
-        cls.servers_client = cls.os_adm.vsm_servers_client
+        super(AppnodessTestJSON, cls).setup_clients()
+        cls.appnodes_client = cls.os_adm.vsm_appnodes_client
 
-    @test.idempotent_id('741909c5-9523-42c4-8f59-ba4096e4b9fc')
+    @test.idempotent_id('6e475cbf-5852-4473-a73b-28b29e83d630')
     def test_list_servers(self):
-        body = self.servers_client.list_servers()
-        servers = body['servers']
-        LOG.info("=============servers: " + str(servers))
-        self.assertTrue(len(servers) != 0, str(servers))
+        body = self.appnodes_client.list_appnodes()
+        appnodes = body['appnodes']
+        LOG.info("=============appnodes: " + str(appnodes))
+        self.assertTrue(len(appnodes) != 0, str(appnodes))
