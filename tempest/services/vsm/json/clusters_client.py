@@ -18,13 +18,26 @@ from oslo_log import log
 
 from tempest.api_schema.response.vsm.v2_0 import clusters as schema
 from tempest.common import service_client
+from tempest import config
 
 LOG = log.getLogger(__name__)
+
+CONF = config.CONF
 
 
 class ClustersClient(service_client.ServiceClient):
 
     def create_cluster(self, params=None):
+        servers = CONF.vsm.servers_name
+        servers_list = []
+        count = 1
+        while len(servers) - 1 > 0:
+            servers_list.append(
+                {"is_storage": True, "is_monitor": True, "id": "%s" % count}
+            )
+            count = count + 1
+            servers.pop()
+
         post_body = json.dumps(
             {
                 "cluster": {
@@ -38,19 +51,16 @@ class ClustersClient(service_client.ServiceClient):
                     "primary_public_netmask": None,
                     "secondary_public_netmask": None,
                     "cluster_netmask": None,
-                    "servers": [
-                        {"is_storage": True, "is_monitor": True, "id": "1"},
-                        {"is_storage": True, "is_monitor": True, "id": "2"},
-                        {"is_storage": True, "is_monitor": True, "id": "3"}
-                    ]
+                    "servers": servers_list
                 }
             }
         )
+        # LOG.info("post_body: " + str(post_body))
         resp, body = self.post("clusters", post_body)
-        LOG.info("++++++++++++" + str(resp))
-        LOG.info("++++++++++++" + str(body))
+        # LOG.info("++++++++++++" + str(resp))
+        # LOG.info("++++++++++++" + str(body))
         self.validate_response(schema.create_cluster, resp, body)
-        return service_client.ResponseBody(resp, body)
+        return resp, service_client.ResponseBody(resp, body)
 
     def list_clusters(self, params=None):
         url = "clusters"
@@ -60,4 +70,4 @@ class ClustersClient(service_client.ServiceClient):
         LOG.info("++++++++++++" + str(body))
         body = json.loads(body)
         self.validate_response(schema.list_clusters, resp, body)
-        return service_client.ResponseBodyList(resp, body['clusters'])
+        return service_client.ResponseBody(resp, body)

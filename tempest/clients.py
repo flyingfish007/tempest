@@ -146,6 +146,7 @@ from tempest.services.volume.v2.json.snapshots_client import \
     SnapshotsV2Client
 from tempest.services.volume.v2.json.volumes_client import VolumesV2Client
 from tempest.services.vsm.json.clusters_client import ClustersClient
+from tempest.services.vsm.json.servers_client import ServersClient as VSMServersClient
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -258,6 +259,7 @@ class Manager(manager.Manager):
             'endpoint_type': CONF.vsm.endpoint_type
         }
         self.clusters_client = ClustersClient(self.auth_provider, **params)
+        self.servers_client = VSMServersClient(self.auth_provider, **params)
 
     def _set_compute_clients(self):
         params = {
