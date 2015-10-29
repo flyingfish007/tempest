@@ -56,6 +56,8 @@ class BaseVSMTest(tempest.test.BaseTestCase):
     @classmethod
     def resource_setup(cls):
         super(BaseVSMTest, cls).resource_setup()
+        cls.build_interval = CONF.vsm.build_interval
+        cls.build_timeout = CONF.vsm.build_timeout
 
     @classmethod
     def resource_cleanup(cls):

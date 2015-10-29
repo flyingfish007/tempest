@@ -207,6 +207,14 @@ VsmGroup = [
                help="The endpoint type to use for the vsm service."
                     "Allowed values: public, admin, internal, publicURL, "
                     "adminURL, internalURL"),
+    cfg.IntOpt('build_timeout',
+               default=300,
+               help="Timeout in seconds to wait for an image to "
+                    "become available."),
+    cfg.IntOpt('build_interval',
+               default=5,
+               help="Time in seconds between image operation status "
+                    "checks."),
     cfg.StrOpt('openstack_username',
                help="Administrative Username to use for "
                     "Keystone API requests."),

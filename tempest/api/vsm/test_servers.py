@@ -17,8 +17,11 @@ from oslo_log import log
 
 from tempest.api.vsm import base
 from tempest import test
+from tempest import config
 
 LOG = log.getLogger(__name__)
+
+CONF = config.CONF
 
 
 class ServersTestJSON(base.BaseVSMAdminTest):
@@ -38,4 +41,5 @@ class ServersTestJSON(base.BaseVSMAdminTest):
         body = self.servers_client.list_servers()
         servers = body['servers']
         LOG.info("=============servers: " + str(servers))
-        self.assertTrue(len(servers) != 0, str(servers))
+        servers_from_conf  = CONF.vsm.servers_name
+        self.assertTrue(len(servers) == len(servers_from_conf), str(servers))

@@ -17,8 +17,12 @@ from oslo_log import log
 
 from tempest.api.vsm import base
 from tempest import test
+from tempest import config
+from tempest.common import waiters
 
 LOG = log.getLogger(__name__)
+
+CONF = config.CONF
 
 
 class ClustersTestJSON(base.BaseVSMAdminTest):
@@ -46,6 +50,14 @@ class ClustersTestJSON(base.BaseVSMAdminTest):
         servers_body = self.servers_client.list_servers()
         servers = servers_body['servers']
         LOG.info("=============servers: " + str(servers))
+        active_servers_num = 0
+        for server in servers:
+            final_status = waiters.wait_for_vsm_server_status(
+                self.servers_client, server['id'], "Active"
+            )
+            if final_status == "Active":
+                active_servers_num = active_servers_num + 1
+        self.assertEqual(active_servers_num >= 3, True)
 
 
     @test.idempotent_id('087acd2f-ce75-48e4-9b0b-a82c9ae57578')

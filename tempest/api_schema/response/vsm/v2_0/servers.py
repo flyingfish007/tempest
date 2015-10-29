@@ -46,3 +46,36 @@ list_servers = {
         'required': ['servers']
     }
 }
+
+get_server = {
+    'status_code': [200],
+    'response_body': {
+        'type': 'object',
+        'properties': {
+            'clusters': {
+                'type': 'array',
+                'items': {
+                    'type': 'object',
+                    'properties': {
+                        'id': {'type': 'integer'},
+                        'cluster_ip': {'type': 'string'},
+                        'raw_ip': {'type': 'string'},
+                        'secondary_public_ip': {'type': 'string'},
+                        'primary_public_ip': {'type': 'string'},
+                        'host': {'type': 'string'},
+                        'ceph_ver': {'type': 'string'},
+                        'zone_id': {'type': 'integer'},
+                        'osds': {'type': 'string'},
+                        'status': {'type': 'string'},
+                        'type': {'type': 'string'}
+                    },
+                    'required': ['id', 'cluster_ip', 'raw_ip',
+                                 'secondary_public_ip', 'primary_public_ip',
+                                 'host', 'ceph_ver', 'zone_id', 'osds',
+                                 'status', 'type']
+                }
+            }
+        },
+        'required': ['server']
+    }
+}

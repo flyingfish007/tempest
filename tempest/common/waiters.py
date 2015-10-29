@@ -217,3 +217,23 @@ def wait_for_bm_node_status(client, node_id, attr, status):
             if caller:
                 message = '(%s) %s' % (caller, message)
             raise exceptions.TimeoutException(message)
+
+
+def wait_for_vsm_server_status(client, server_id, status):
+    start = int(time.time())
+    body = client.get_server_by_server_id(server_id)
+    server = body['server']
+    while True:
+        if server['status'] == status:
+            return "Active"
+        else:
+            if int(time.time() - start) >= client.build_timeout:
+                message = ('Node %(server_ip)s failed to reach %(status)s '
+                           'within the required time (%(timeout)s s).' %
+                           {'server_ip': server['cluster_ip'],
+                            'status': status,
+                            'timeout': client.build_timeout})
+                raise exceptions.TimeoutException(message)
+            time.sleep(client.build_interval)
+            body = client.get_server_by_server_id(server_id)
+            server = body['server']

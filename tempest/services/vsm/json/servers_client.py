@@ -51,3 +51,10 @@ class ServersClient(service_client.ServiceClient):
         body = json.loads(body)
         self.validate_response(schema.list_servers, resp, body)
         return service_client.ResponseBody(resp, body)
+
+    def get_server_by_server_id(self, server_id):
+        url = "servers/%s" % server_id
+        resp, body = self.get(url)
+        body = json.loads(body)
+        self.validate_response(schema.get_server, resp, body)
+        return service_client.ResponseBody(resp, body)
