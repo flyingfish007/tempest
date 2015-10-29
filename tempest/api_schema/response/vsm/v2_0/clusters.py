@@ -46,34 +46,5 @@ list_clusters = {
 }
 
 create_cluster = {
-    'status_code': [202],
-    'response_body': {
-        'type': 'object',
-        'properties': {
-            'server': {
-                'type': 'object',
-                'properties': {
-                    'name': {'type': 'string'},
-                    'servers': {'type': 'array'},
-                    'primary_public_network': {'type': 'string'},
-                    'primary_public_netmask': {'type': 'string'},
-                    'secondary_public_network': {'type': 'string'},
-                    'secondary_public_netmask': {'type': 'string'},
-                    'cluster_network': {'type': 'string'},
-                    'cluster_netmask': {'type': 'string'},
-                    'file_system': {'type': 'string'},
-                    'size': {'type': 'integer'},
-                    'journal_size': {'type': 'integer'}
-                },
-                'required': ['name', 'servers',
-                             'primary_public_network',
-                             'primary_public_netmask',
-                             'secondary_public_network',
-                             'secondary_public_netmask',
-                             'cluster_network', 'cluster_netmask',
-                             'file_system', 'size', 'journal_size']
-            }
-        },
-        'required': ['cluster']
-    }
+    'status_code': [202]
 }

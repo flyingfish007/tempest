@@ -13,8 +13,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log
+
 from tempest.api.vsm import base
 from tempest import test
+
+LOG = log.getLogger(__name__)
 
 
 class ClustersTestJSON(base.BaseVSMAdminTest):
@@ -30,7 +34,7 @@ class ClustersTestJSON(base.BaseVSMAdminTest):
 
     @test.idempotent_id('b69103ea-56a8-4410-9484-aa940e4bd276')
     def test_create_clusters(self):
-        self.client.create_cluster()
+        resp, body = self.client.create_cluster()
 
     @test.idempotent_id('087acd2f-ce75-48e4-9b0b-a82c9ae57578')
     def test_list_clusters(self):

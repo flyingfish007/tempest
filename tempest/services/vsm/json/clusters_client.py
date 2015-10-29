@@ -14,26 +14,50 @@
 #    under the License.
 
 import json
+from oslo_log import log
 
 from tempest.api_schema.response.vsm.v2_0 import clusters as schema
 from tempest.common import service_client
+
+LOG = log.getLogger(__name__)
 
 
 class ClustersClient(service_client.ServiceClient):
 
     def create_cluster(self, params=None):
         post_body = json.dumps(
-            {"is_storage": 1, "is_monitor": 1, "id": "1"},
-            {"is_storage": 1, "is_monitor": 1, "id": "2"},
-            {"is_storage": 1, "is_monitor": 1, "id": "3"}
+            {
+                "cluster": {
+                    "name": "default",
+                    "file_system": "xfs",
+                    "journal_size": None,
+                    "size": None,
+                    "management_network": None,
+                    "ceph_public_network": None,
+                    "cluster_network": None,
+                    "primary_public_netmask": None,
+                    "secondary_public_netmask": None,
+                    "cluster_netmask": None,
+                    "servers": [
+                        {"is_storage": True, "is_monitor": True, "id": "1"},
+                        {"is_storage": True, "is_monitor": True, "id": "2"},
+                        {"is_storage": True, "is_monitor": True, "id": "3"}
+                    ]
+                }
+            }
         )
         resp, body = self.post("clusters", post_body)
-        print(resp, body)
+        LOG.info("++++++++++++" + str(resp))
+        LOG.info("++++++++++++" + str(body))
+        self.validate_response(schema.create_cluster, resp, body)
+        return service_client.ResponseBody(resp, body)
 
     def list_clusters(self, params=None):
         url = "clusters"
 
         resp, body = self.get(url)
+        LOG.info("++++++++++++" + str(resp))
+        LOG.info("++++++++++++" + str(body))
         body = json.loads(body)
         self.validate_response(schema.list_clusters, resp, body)
         return service_client.ResponseBodyList(resp, body['clusters'])
