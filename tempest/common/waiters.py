@@ -227,13 +227,13 @@ def wait_for_vsm_server_status(client, server_id, status):
         if server['status'] == status:
             return "Active"
         else:
-            if int(time.time() - start) >= client.build_timeout:
+            if int(time.time() - start) >= CONF.vsm.build_timeout:
                 message = ('Node %(server_ip)s failed to reach %(status)s '
                            'within the required time (%(timeout)s s).' %
                            {'server_ip': server['cluster_ip'],
                             'status': status,
-                            'timeout': client.build_timeout})
+                            'timeout': CONF.vsm.build_timeout})
                 raise exceptions.TimeoutException(message)
-            time.sleep(client.build_interval)
+            time.sleep(CONF.vsm.build_interval)
             body = client.get_server_by_server_id(server_id)
             server = body['server']
