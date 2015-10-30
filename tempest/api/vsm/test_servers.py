@@ -42,4 +42,4 @@ class ServersTestJSON(base.BaseVSMAdminTest):
         servers = body['servers']
         LOG.info("=============servers: " + str(servers))
         servers_from_conf  = CONF.vsm.servers_name
-        self.assertTrue(len(servers) == len(servers_from_conf), str(servers))
+        self.assertEqual(len(servers) == len(servers_from_conf) - 1, True)
