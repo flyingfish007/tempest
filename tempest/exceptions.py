@@ -169,6 +169,9 @@ class InvalidHTTPResponseHeader(RestClientException):
 class InvalidStructure(TempestException):
     message = "Invalid structure of table with details"
 
+class VSMServerErrorException(TempestException):
+    message = "VSM server %(host)s is in ERROR status"
+
 
 class CommandFailed(Exception):
     def __init__(self, returncode, cmd, output, stderr):

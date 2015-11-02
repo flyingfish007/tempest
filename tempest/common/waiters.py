@@ -225,7 +225,9 @@ def wait_for_vsm_server_status(client, server_id, status):
     server = body['server']
     while True:
         if server['status'] == status:
-            return "Active"
+            return status
+        elif server['status'] == "ERROR":
+            raise exceptions.VSMServerErrorException(host=server['host'])
         else:
             if int(time.time() - start) >= CONF.vsm.build_timeout:
                 message = ('Node %(server_ip)s failed to reach %(status)s '
