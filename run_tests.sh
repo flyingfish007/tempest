@@ -2,37 +2,41 @@
 
 function usage {
   echo "Usage: $0 [OPTION]..."
-  echo "Run Tempest unit tests"
+  echo "Run Tempest test suite"
   echo ""
   echo "  -V, --virtual-env        Always use virtualenv.  Install automatically if not present"
   echo "  -N, --no-virtual-env     Don't use virtualenv.  Run tests in local environment"
   echo "  -n, --no-site-packages   Isolate the virtualenv from the global Python environment"
+  echo "  -e, --env-never-new      Apply servers env for vsm nodes"
   echo "  -f, --force              Force a clean re-build of the virtual environment. Useful when dependencies have been added."
   echo "  -u, --update             Update the virtual environment with any newer package versions"
+  echo "  -s, --smoke              Only run smoke tests"
   echo "  -t, --serial             Run testr serially"
-  echo "  -p, --pep8               Just run pep8"
-  echo "  -c, --coverage           Generate coverage report"
+  echo "  -C, --config             Config file location"
   echo "  -h, --help               Print this usage message"
   echo "  -d, --debug              Run tests with testtools instead of testr. This allows you to use PDB"
+  echo "  -l, --logging            Enable logging"
+  echo "  -L, --logging-config     Logging config file location.  Default is etc/logging.conf"
   echo "  -- [TESTROPTIONS]        After the first '--' you can pass arbitrary arguments to testr "
 }
 
 testrargs=""
-just_pep8=0
 venv=${VENV:-.venv}
 with_venv=tools/with_venv.sh
 serial=0
 always_venv=0
 never_venv=0
 no_site_packages=0
+env_never_new=0
 debug=0
 force=0
-coverage=0
 wrapper=""
 config_file=""
 update=0
+logging=0
+logging_config=etc/logging.conf
 
-if ! options=$(getopt -o VNnfuctphd -l virtual-env,no-virtual-env,no-site-packages,force,update,serial,coverage,pep8,help,debug -- "$@")
+if ! options=$(getopt -o VNnefusthdC:lL: -l virtual-env,no-virtual-env,no-site-packages,env-never-new,force,update,smoke,serial,help,debug,config:,logging,logging-config: -- "$@")
 then
     # parse error
     usage
@@ -47,18 +51,36 @@ while [ $# -gt 0 ]; do
     -V|--virtual-env) always_venv=1; never_venv=0;;
     -N|--no-virtual-env) always_venv=0; never_venv=1;;
     -n|--no-site-packages) no_site_packages=1;;
+    -e|--env-never-new) env_never_new=1;;
     -f|--force) force=1;;
     -u|--update) update=1;;
     -d|--debug) debug=1;;
-    -p|--pep8) let just_pep8=1;;
-    -c|--coverage) coverage=1;;
+    -C|--config) config_file=$2; shift;;
+    -s|--smoke) testrargs+="smoke";;
     -t|--serial) serial=1;;
+    -l|--logging) logging=1;;
+    -L|--logging-config) logging_config=$2; shift;;
     --) [ "yes" == "$first_uu" ] || testrargs="$testrargs $1"; first_uu=no  ;;
     *) testrargs="$testrargs $1";;
   esac
   shift
 done
 
+if [ -n "$config_file" ]; then
+    config_file=`readlink -f "$config_file"`
+    export TEMPEST_CONFIG_DIR=`dirname "$config_file"`
+    export TEMPEST_CONFIG=`basename "$config_file"`
+fi
+
+if [ $logging -eq 1 ]; then
+    if [ ! -f "$logging_config" ]; then
+        echo "No such logging config file: $logging_config"
+        exit 1
+    fi
+    logging_config=`readlink -f "$logging_config"`
+    export TEMPEST_LOG_CONFIG_DIR=`dirname "$logging_config"`
+    export TEMPEST_LOG_CONFIG=`basename "$logging_config"`
+fi
 
 cd `dirname "$0"`
 
@@ -75,17 +97,12 @@ function testr_init {
 function run_tests {
   testr_init
   ${wrapper} find . -type f -name "*.pyc" -delete
-  export OS_TEST_PATH=./tempest/tests
+  export OS_TEST_PATH=./tempest/test_discover
   if [ $debug -eq 1 ]; then
       if [ "$testrargs" = "" ]; then
-          testrargs="discover ./tempest/tests"
+           testrargs="discover ./tempest/test_discover"
       fi
       ${wrapper} python -m testtools.run $testrargs
-      return $?
-  fi
-
-  if [ $coverage -eq 1 ]; then
-      ${wrapper} python setup.py test --coverage
       return $?
   fi
 
@@ -94,15 +111,6 @@ function run_tests {
   else
       ${wrapper} testr run --parallel --subunit $testrargs | ${wrapper} subunit-2to1 | ${wrapper} tools/colorizer.py
   fi
-}
-
-function run_pep8 {
-  echo "Running flake8 ..."
-  if [ $never_venv -eq 1 ]; then
-      echo "**WARNING**:" >&2
-      echo "Running flake8 without virtual env may miss OpenStack HACKING detection" >&2
-  fi
-  ${wrapper} flake8
 }
 
 if [ $never_venv -eq 0 ]
@@ -135,16 +143,16 @@ then
   fi
 fi
 
-if [ $just_pep8 -eq 1 ]; then
-    run_pep8
-    exit
+echo "==================================="
+if [ $env_never_new -eq 0 ]
+then
+  # Apply new servers for vsm nodes
+  echo -e "Apply new servers for vsm nodes and deploy vsm"
+  python tools/vsm_env.py
 fi
+
 
 run_tests
 retval=$?
-
-if [ -z "$testrargs" ]; then
-    run_pep8
-fi
 
 exit $retval
