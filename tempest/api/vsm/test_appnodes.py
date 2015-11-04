@@ -33,8 +33,12 @@ class AppnodessTestJSON(base.BaseVSMAdminTest):
         super(AppnodessTestJSON, cls).setup_clients()
         cls.appnodes_client = cls.os_adm.vsm_appnodes_client
 
+    @classmethod
+    def resource_setup(cls):
+        super(AppnodessTestJSON, cls).resource_setup()
+
     @test.idempotent_id('6e475cbf-5852-4473-a73b-28b29e83d630')
-    def test_list_servers(self):
+    def test_list_appnodes(self):
         body = self.appnodes_client.list_appnodes()
         appnodes = body['appnodes']
         LOG.info("=============appnodes: " + str(appnodes))

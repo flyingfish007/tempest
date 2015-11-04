@@ -172,6 +172,9 @@ class InvalidStructure(TempestException):
 class VSMServerErrorException(TempestException):
     message = "VSM server %(host)s is in ERROR status"
 
+class VSMClusterErrorException(TempestException):
+    message = "Create VSM ceph cluster failed"
+
 
 class CommandFailed(Exception):
     def __init__(self, returncode, cmd, output, stderr):

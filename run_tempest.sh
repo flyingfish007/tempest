@@ -7,7 +7,7 @@ function usage {
   echo "  -V, --virtual-env        Always use virtualenv.  Install automatically if not present"
   echo "  -N, --no-virtual-env     Don't use virtualenv.  Run tests in local environment"
   echo "  -n, --no-site-packages   Isolate the virtualenv from the global Python environment"
-  echo "  -a, --apply-servers      Apply servers env for vsm nodes"
+  echo "  -e, --env-never-new      Do not apply new servers env for vsm nodes"
   echo "  -f, --force              Force a clean re-build of the virtual environment. Useful when dependencies have been added."
   echo "  -u, --update             Update the virtual environment with any newer package versions"
   echo "  -s, --smoke              Only run smoke tests"
@@ -27,7 +27,7 @@ serial=0
 always_venv=0
 never_venv=0
 no_site_packages=0
-apply_servers=0
+env_never_new=0
 debug=0
 force=0
 wrapper=""
@@ -36,7 +36,7 @@ update=0
 logging=0
 logging_config=etc/logging.conf
 
-if ! options=$(getopt -o VNnafusthdC:lL: -l virtual-env,no-virtual-env,no-site-packages,apply-servers,force,update,smoke,serial,help,debug,config:,logging,logging-config: -- "$@")
+if ! options=$(getopt -o VNnefusthdC:lL: -l virtual-env,no-virtual-env,no-site-packages,env-never-new,force,update,smoke,serial,help,debug,config:,logging,logging-config: -- "$@")
 then
     # parse error
     usage
@@ -51,7 +51,7 @@ while [ $# -gt 0 ]; do
     -V|--virtual-env) always_venv=1; never_venv=0;;
     -N|--no-virtual-env) always_venv=0; never_venv=1;;
     -n|--no-site-packages) no_site_packages=1;;
-    -a|--apply-servers) apply_servers=1;;
+    -e|--env-never-new) env_never_new=1;;
     -f|--force) force=1;;
     -u|--update) update=1;;
     -d|--debug) debug=1;;
@@ -107,8 +107,10 @@ function run_tests {
   fi
 
   if [ $serial -eq 1 ]; then
+      ${wrapper} testr run tempest.api.vsm.test_clusters.ClustersTestJSON.test_create_clusters
       ${wrapper} testr run --subunit $testrargs | ${wrapper} subunit-2to1 | ${wrapper} tools/colorizer.py
   else
+      ${wrapper} testr run tempest.api.vsm.test_clusters.ClustersTestJSON.test_create_clusters
       ${wrapper} testr run --parallel --subunit $testrargs | ${wrapper} subunit-2to1 | ${wrapper} tools/colorizer.py
   fi
 }
@@ -143,12 +145,11 @@ then
   fi
 fi
 
-echo "==================================="
-if [ $apply_servers -eq 1 ]
+if [ $env_never_new -eq 0 ]
 then
   # Apply new servers for vsm nodes
   echo -e "Apply new servers for vsm nodes and deploy vsm"
-  python tools/deploy_vsm.py
+  python tools/vsm_env.py
 fi
 
 

@@ -30,12 +30,10 @@ class ClustersClient(service_client.ServiceClient):
     def create_cluster(self, params=None):
         servers = CONF.vsm.servers_name
         servers_list = []
-        count = 1
-        while len(servers) - 1 > 0:
+        while len(servers)  > 1:
             servers_list.append(
-                {"is_storage": True, "is_monitor": True, "id": "%s" % count}
+                {"is_storage": True, "is_monitor": True, "id": len(servers) - 1}
             )
-            count = count + 1
             servers.pop()
 
         post_body = json.dumps(

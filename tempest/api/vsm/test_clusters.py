@@ -40,8 +40,16 @@ class ClustersTestJSON(base.BaseVSMAdminTest):
         cls.clusters_client = cls.os_adm.vsm_clusters_client
         cls.servers_client = cls.os_adm.vsm_servers_client
 
+    @classmethod
+    def resource_setup(cls):
+        super(ClustersTestJSON, cls).resource_setup()
+
     @test.idempotent_id('b69103ea-56a8-4410-9484-aa940e4bd276')
     def test_create_clusters(self):
+        result = self.check_vsm_cluster_exist()
+        if result == "yes":
+            self.assertEqual(True, True)
+            return
         resp, body = self.clusters_client.create_cluster()
         status = resp['status']
         LOG.info("==========body: " + str(body))
@@ -62,6 +70,10 @@ class ClustersTestJSON(base.BaseVSMAdminTest):
 
     @test.idempotent_id('087acd2f-ce75-48e4-9b0b-a82c9ae57578')
     def test_list_clusters(self):
+        result = self.check_vsm_cluster_exist()
+        if result == "no":
+            self.create_vsm_ceph_cluster()
+
         body = self.clusters_client.list_clusters()
         clusters = body['clusters']
         LOG.info("=============clusters: " + str(clusters))

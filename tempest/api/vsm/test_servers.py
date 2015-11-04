@@ -36,6 +36,10 @@ class ServersTestJSON(base.BaseVSMAdminTest):
         super(ServersTestJSON, cls).setup_clients()
         cls.servers_client = cls.os_adm.vsm_servers_client
 
+    @classmethod
+    def resource_setup(cls):
+        super(ServersTestJSON, cls).resource_setup()
+
     @test.idempotent_id('741909c5-9523-42c4-8f59-ba4096e4b9fc')
     def test_list_servers(self):
         body = self.servers_client.list_servers()

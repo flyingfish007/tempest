@@ -19,6 +19,7 @@ from oslo_log import log as logging
 
 from tempest import config
 from tempest import exceptions
+from tempest.common import vsm_ceph_cluster
 import tempest.test
 
 CONF = config.CONF
@@ -62,6 +63,19 @@ class BaseVSMTest(tempest.test.BaseTestCase):
     @classmethod
     def resource_cleanup(cls):
         super(BaseVSMTest, cls).resource_cleanup()
+
+    @classmethod
+    def create_vsm_ceph_cluster(cls):
+        vsm_ceph_cluster.create_vsm_ceph_cluster(cls.os)
+
+    @classmethod
+    def check_vsm_cluster_exist(cls):
+        result = vsm_ceph_cluster.check_vsm_cluster_exist(cls.os)
+        return result
+
+    @classmethod
+    def cleanup_vsm_cluster(cls):
+        vsm_ceph_cluster.cleanup_vsm_cluster()
 
     def wait_for(self, condition):
         """Repeatedly calls condition() until a timeout."""
