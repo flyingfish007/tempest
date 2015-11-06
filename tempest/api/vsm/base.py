@@ -53,6 +53,8 @@ class BaseVSMTest(tempest.test.BaseTestCase):
         cls.clusters_client = cls.os.vsm_clusters_client
         cls.servers_client = cls.os.vsm_servers_client
         cls.appnodes_client = cls.os.vsm_appnodes_client
+        cls.devices_client = cls.os.vsm_devices_client
+        cls.mdses_client = cls.os.vsm_mdses_client
 
     @classmethod
     def resource_setup(cls):

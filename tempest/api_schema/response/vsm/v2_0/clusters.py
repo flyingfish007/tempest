@@ -48,3 +48,68 @@ list_clusters = {
 create_cluster = {
     'status_code': [202]
 }
+
+summary_cluster = {
+    'status_code': [200],
+    'response_body': {
+        'type': 'object',
+        'properties': {
+            'cluster-summary': {
+                'type': 'object',
+                'properties': {
+                    'status': {'type': 'array'},
+                    'cluster': {'type': 'string'},
+                    'health_list': {'type': 'array'},
+                    'detail': {'type': 'array'},
+                    'updated_at': {'type': 'string'}
+                },
+                'required': ['status', 'cluster', 'health_list',
+                             'detail', 'updated_at']
+            }
+        },
+        'required': ['cluster-summary']
+    }
+}
+
+refresh_cluster = {
+    'status_code': [200]
+}
+
+# TODO inport_ceph_conf response
+import_ceph_conf = {
+    'status_code': [200],
+    'response_body': {
+        'type': 'object',
+        'properties': {
+            'message': {'type': 'string'}
+        },
+        'required': ['message']
+    }
+}
+
+# TODO integrate response
+integrate_cluster = {
+    'status_code': [200]
+}
+
+stop_cluster = {
+    'status_code': [200],
+    'response_body': {
+        'type': 'object',
+        'properties': {
+            'message': {'type': 'string'}
+        },
+        'required': ['message']
+    }
+}
+
+start_cluster = {
+    'status_code': [200],
+    'response_body': {
+        'type': 'object',
+        'properties': {
+            'message': {'type': 'string'}
+        },
+        'required': ['message']
+    }
+}

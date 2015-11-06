@@ -29,23 +29,26 @@ LOG = logging.getLogger(__name__)
 
 
 def create_vsm_ceph_cluster(clients):
-    LOG.info("++++++++++++++create_vsm_ceph_cluster++++++++++++++")
     file = glob.glob("/tmp/vsm_cluster.lock")
     if file:
         result = wait_server_active(clients)
         if result == "no":
+            os.remove("/tmp/vsm_cluster.lock")
             raise exceptions.VSMClusterErrorException
         os.remove("/tmp/vsm_cluster.lock")
         return None
     file = open("/tmp/vsm_cluster.lock", 'w')
     file.close()
+    LOG.info("++++++++++++++create_vsm_ceph_cluster++++++++++++++")
     resp, body = clients.vsm_clusters_client.create_cluster()
     status = resp['status']
 
-    if status not in ['200', '202']:
+    if status not in ['200', '202'] or int(status) not in [200, 202]:
+        os.remove("/tmp/vsm_cluster.lock")
         raise exceptions.VSMClusterErrorException
     result = wait_server_active(clients)
     if result == "no":
+        os.remove("/tmp/vsm_cluster.lock")
         raise exceptions.VSMClusterErrorException
 
     os.remove("/tmp/vsm_cluster.lock")
@@ -72,6 +75,7 @@ def check_vsm_cluster_exist(clients):
     LOG.info("++++++++++++++check_vsm_cluster_exist++++++++++++++")
     servers_body = clients.vsm_servers_client.list_servers()
     servers = servers_body['servers']
+    LOG.info("++++check_vsm_cluster_exist, servers++++++++++++++" + str(servers))
     for server in servers:
         if server['status'] == "Active":
             exist = "yes"

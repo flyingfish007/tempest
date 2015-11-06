@@ -30,6 +30,15 @@ class ClustersTestJSON(base.BaseVSMAdminTest):
     """
 
     Tests clusters API using admin privileges.
+    Cluster Rest API function:
+        create              post
+        list                get
+        summary             get
+        refresh             post
+        import_ceph_conf    post
+        integrate           post
+        stop_cluster        post
+        start_cluster       post
     """
 
     OK_STATUS = [200, 202]
@@ -67,14 +76,46 @@ class ClustersTestJSON(base.BaseVSMAdminTest):
                 active_servers_num = active_servers_num + 1
         self.assertEqual(active_servers_num >= 3, True)
 
-
     @test.idempotent_id('087acd2f-ce75-48e4-9b0b-a82c9ae57578')
     def test_list_clusters(self):
-        result = self.check_vsm_cluster_exist()
-        if result == "no":
-            self.create_vsm_ceph_cluster()
-
-        body = self.clusters_client.list_clusters()
+        # TODO the rest api of list cluster is hardcode
+        resp, body = self.clusters_client.list_clusters()
+        status = resp['status']
+        self.assertIn(int(status), self.OK_STATUS)
         clusters = body['clusters']
         LOG.info("=============clusters: " + str(clusters))
         self.assertTrue(len(clusters) == 1, str(clusters))
+
+    @test.idempotent_id('46be542c-8c44-4896-a362-fd5242620a0f')
+    def test_cluster_summary(self):
+        resp, body = self.clusters_client.summary_cluster()
+        status = resp['status']
+        # TODO wish better than this assert
+        self.assertIn(int(status), self.OK_STATUS)
+
+    @test.idempotent_id('4f075ad4-8d8b-4afc-a773-65891abc3251')
+    def test_refresh_cluster(self):
+        resp, body = self.clusters_client.refresh_cluster()
+        status = resp['status']
+        # TODO wish better than this assert
+        self.assertIn(int(status), self.OK_STATUS)
+
+    @test.idempotent_id('121ad650-5d4b-4669-b07f-3fbafecff371')
+    def test_import_ceph_conf(self):
+        # TODO not implemented
+        self.assertEqual(True, True)
+
+    @test.idempotent_id('b882e5ff-2820-4d8f-85cf-d79f80026816')
+    def test_integrate_cluster(self):
+        # TODO not implemented
+        self.assertEqual(True, True)
+
+    @test.idempotent_id('188d2113-29dc-41e9-b60e-87ec14a63c44')
+    def test_stop_cluster(self):
+        # TODO not implemented
+        self.assertEqual(True, True)
+
+    @test.idempotent_id('e2aa865b-ecd6-4acb-bd33-be69b928762f')
+    def test_start_cluster(self):
+        # TODO not implemented
+        self.assertEqual(True, True)

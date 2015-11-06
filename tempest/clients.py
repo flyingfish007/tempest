@@ -145,9 +145,12 @@ from tempest.services.volume.v2.json.qos_client import QosSpecsV2Client
 from tempest.services.volume.v2.json.snapshots_client import \
     SnapshotsV2Client
 from tempest.services.volume.v2.json.volumes_client import VolumesV2Client
+
 from tempest.services.vsm.json.clusters_client import ClustersClient as VSMClustersClient
 from tempest.services.vsm.json.servers_client import ServersClient as VSMServersClient
 from tempest.services.vsm.json.appnodes_client import AppnodesClient as VSMAppnodesClient
+from tempest.services.vsm.json.devices_client import DevicesClient as VSMDevicesClient
+from tempest.services.vsm.json.mdses_client import MdsesClient as VSMMdsesClient
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -262,6 +265,8 @@ class Manager(manager.Manager):
         self.vsm_clusters_client = VSMClustersClient(self.auth_provider, **params)
         self.vsm_servers_client = VSMServersClient(self.auth_provider, **params)
         self.vsm_appnodes_client = VSMAppnodesClient(self.auth_provider, **params)
+        self.vsm_devices_client = VSMDevicesClient(self.auth_provider, **params)
+        self.vsm_mdses_client = VSMMdsesClient(self.auth_provider, **params)
 
     def _set_compute_clients(self):
         params = {

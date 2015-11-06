@@ -514,6 +514,20 @@ class DeployVSM(object):
 
         cwd = os.getcwd()
         tempest_conf = "%s/etc/tempest.conf" % cwd
+        os.system(
+            "sed -i \"s/^admin_tenant_name = *.*/#admin_tenant_name = "
+            "<None>/g\" %s" % tempest_conf)
+        os.system(
+            "sed -i \"s/^admin_username = *.*/#admin_username = "
+            "<None>/g\" %s" % tempest_conf)
+        os.system(
+            "sed -i \"s/^admin_password = *.*/#admin_password = "
+            "<None>/g\" %s" % tempest_conf)
+        os.system(
+            "sed -i \"s/^uri = *.*/#uri = <None>/g\" %s" % tempest_conf)
+        os.system(
+            "sed -i \"s/api_v3 = false/#api_v3 = true/g\" %s" % tempest_conf)
+
         file = open("/tmp/keyrc")
         line = file.readline()
         if line:

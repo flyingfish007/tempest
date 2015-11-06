@@ -53,19 +53,76 @@ class ClustersClient(service_client.ServiceClient):
                 }
             }
         )
-        # LOG.info("post_body: " + str(post_body))
+        LOG.info("post_body create_cluster============" + str(post_body))
         resp, body = self.post("clusters", post_body)
-        # LOG.info("++++++++++++" + str(resp))
-        # LOG.info("++++++++++++" + str(body))
         self.validate_response(schema.create_cluster, resp, body)
         return resp, service_client.ResponseBody(resp, body)
 
+    # TODO the return is hardcode
     def list_clusters(self, params=None):
         url = "clusters"
 
         resp, body = self.get(url)
-        LOG.info("++++++++++++" + str(resp))
-        LOG.info("++++++++++++" + str(body))
         body = json.loads(body)
         self.validate_response(schema.list_clusters, resp, body)
+        return resp, service_client.ResponseBody(resp, body)
+
+    def summary_cluster(self):
+        url = "clusters/summary"
+        resp, body = self.get(url)
+        body = json.loads(body)
+        self.validate_response(schema.summary_cluster, resp, body)
+        return resp, service_client.ResponseBody(resp, body['cluster-summary'])
+
+    def refresh_cluster(self):
+        url = "clusters/refresh"
+        resp, body = self.post(url, {})
+        self.validate_response(schema.refresh_cluster, resp, body)
+        return resp, service_client.ResponseBody(resp, body)
+
+    def import_ceph_conf(self, **kwargs):
+        cluster_name = kwargs.get('cluster_name', None)
+        ceph_conf_path = kwargs.get('ceph_conf_path', None)
+        post_body = {
+            'cluster': {
+                'cluster_name': cluster_name,
+                'ceph_conf_path': ceph_conf_path
+            }
+        }
+
+        url = "clusters/import_ceph_conf"
+        resp, body = self.post(url, post_body)
+        body = json.loads(body)
+        self.validate_response(schema.import_ceph_conf, resp, body)
+        # TODO return
+        return service_client.ResponseBody(resp, body)
+
+    def integrate_cluster(self):
+        # TODO integrate cluster function
+        return
+
+    def stop_cluster(self, cluster_id):
+        post_body = {
+            'cluster': {
+                'id': cluster_id
+            }
+        }
+        url = "clusters/stop_cluster"
+        resp, body = self.post(url, post_body)
+        body = json.loads(body)
+        self.validate_response(schema.stop_cluster, resp, body)
+        # TODO retrun
+        return service_client.ResponseBody(resp, body)
+
+    def start_cluster(self, cluster_id):
+        post_body = {
+            'cluster': {
+                'id': cluster_id
+            }
+        }
+        url = "clusters/start_cluster"
+        resp, body = self.post(url, post_body)
+        body = json.loads(body)
+        self.validate_response(schema.start_cluster, resp, body)
+        # TODO return
         return service_client.ResponseBody(resp, body)

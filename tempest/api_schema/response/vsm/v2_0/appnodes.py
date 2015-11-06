@@ -18,7 +18,7 @@ list_appnodes = {
     'response_body': {
         'type': 'object',
         'properties': {
-            'clusters': {
+            'appnodes': {
                 'type': 'array',
                 'items': {
                     'type': 'object',
@@ -44,5 +44,60 @@ list_appnodes = {
             }
         },
         'required': ['appnodes']
+    }
+}
+
+create_appnode = {
+    'status_code': [201],
+    'response_body': {
+        'type': 'object',
+        'properties': {
+            'appnodes': {
+                'type': 'object',
+                'properties': {
+                    'os_tenant_name': {'type': 'string'},
+                    'os_username': {'type': 'string'},
+                    'os_password': {'type': 'string'},
+                    'os_auth_url': {'type': 'string'},
+                    'os_region_name': {'type': 'string'},
+                    'ssh_user': {'type': 'string'}
+                },
+                'required': ['os_tenant_name', 'os_username',
+                             'os_password', 'os_auth_url',
+                             'os_region_name', 'ssh_user']
+            }
+        },
+        'required': ['appnodes']
+    }
+}
+
+delete_appnode = {
+    'status_code': [201]
+}
+
+update_appnode = {
+    'status_code': [201],
+    'response_body': {
+        'type': 'object',
+        'properties': {
+            'appnode': {
+                'type': 'object',
+                'properties': {
+                    'os_tenant_name': {'type': 'string'},
+                    'os_username': {'type': 'string'},
+                    'os_password': {'type': 'string'},
+                    'os_auth_url': {'type': 'string'},
+                    'os_region_name': {'type': 'string'},
+                    'ssh_user': {'type': 'string'},
+                    'ssh_status': {'type': 'string'},
+                    'log_info': {'type': 'string'}
+                },
+                'required': ['os_tenant_name', 'os_username',
+                             'os_password', 'os_auth_url',
+                             'os_region_name', 'ssh_user',
+                             'ssh_status', 'log_info']
+            }
+        },
+        'required': ['appnode']
     }
 }
