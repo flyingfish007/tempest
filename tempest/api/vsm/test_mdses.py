@@ -18,7 +18,6 @@ from oslo_log import log
 from tempest.api.vsm import base
 from tempest import test
 from tempest import config
-from tempest.common import waiters
 
 LOG = log.getLogger(__name__)
 
@@ -50,6 +49,7 @@ class MdsesTestJSON(base.BaseVSMAdminTest):
     def test_list_mdses(self):
         resp, body = self.mdses_client.list_mdses()
         status = resp['status']
+        # TODO wish better than this assert
         self.assertIn(int(status), self.OK_STATUS)
         mdses = body['mdses']
         # TODO wish better than this assert

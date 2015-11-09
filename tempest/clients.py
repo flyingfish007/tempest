@@ -146,11 +146,24 @@ from tempest.services.volume.v2.json.snapshots_client import \
     SnapshotsV2Client
 from tempest.services.volume.v2.json.volumes_client import VolumesV2Client
 
-from tempest.services.vsm.json.clusters_client import ClustersClient as VSMClustersClient
-from tempest.services.vsm.json.servers_client import ServersClient as VSMServersClient
-from tempest.services.vsm.json.appnodes_client import AppnodesClient as VSMAppnodesClient
-from tempest.services.vsm.json.devices_client import DevicesClient as VSMDevicesClient
-from tempest.services.vsm.json.mdses_client import MdsesClient as VSMMdsesClient
+from tempest.services.vsm.json.clusters_client import \
+    ClustersClient as VSMClustersClient
+from tempest.services.vsm.json.servers_client import \
+    ServersClient as VSMServersClient
+from tempest.services.vsm.json.appnodes_client import \
+    AppnodesClient as VSMAppnodesClient
+from tempest.services.vsm.json.devices_client import \
+    DevicesClient as VSMDevicesClient
+from tempest.services.vsm.json.mdses_client import \
+    MdsesClient as VSMMdsesClient
+from tempest.services.vsm.json.monitors_client import \
+    MonitorsClient as VSMMonitorsClient
+from tempest.services.vsm.json.osds_client import \
+    OsdsClient as VSMOsdsClient
+from tempest.services.vsm.json.performance_metrics_client import \
+    PerformanceMetricsClient as VSMPerformanceMetricsClient
+from tempest.services.vsm.json.placement_groups_client import \
+    PlacementGroupsClient as VSMPlacementGroupsClient
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -267,6 +280,12 @@ class Manager(manager.Manager):
         self.vsm_appnodes_client = VSMAppnodesClient(self.auth_provider, **params)
         self.vsm_devices_client = VSMDevicesClient(self.auth_provider, **params)
         self.vsm_mdses_client = VSMMdsesClient(self.auth_provider, **params)
+        self.vsm_monitors_client = VSMMonitorsClient(self.auth_provider, **params)
+        self.vsm_osds_client = VSMOsdsClient(self.auth_provider, **params)
+        self.vsm_performance_metrics_client = \
+            VSMPerformanceMetricsClient(self.auth_provider, **params)
+        self.vsm_placement_groups_client = \
+        VSMPlacementGroupsClient(self.auth_provider, **params)
 
     def _set_compute_clients(self):
         params = {

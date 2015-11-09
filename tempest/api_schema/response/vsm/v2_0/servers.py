@@ -76,3 +76,35 @@ get_server = {
         'required': ['server']
     }
 }
+
+add_server = {
+    'status_code': [202]
+}
+
+remove_server = {
+    'status_code': [202]
+}
+
+reset_server_status = {
+    'status_code': [200],
+    'response_body': {
+        'type': 'object',
+        'properties': {
+            'status': {'type': 'string'}
+        },
+        'required': ['status']
+    }
+}
+
+start_server = {
+    'status_code': [202]
+}
+
+stop_server = {
+    'status_code': [202]
+}
+
+# TODO
+upgrade_ceph = {
+    'status_code': [202]
+}

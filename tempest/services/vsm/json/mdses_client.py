@@ -33,9 +33,9 @@ class MdsesClient(service_client.ServiceClient):
             search_opts = {}
         qparams = {}
 
-        for opt, val in search_opts.iteritems():
-            if val:
-                qparams[opt] = val
+        for k, v in search_opts.iteritems():
+            if v:
+                qparams[k] = v
 
         if qparams:
             query_string = "?%s" % urllib.urlencode(qparams)
@@ -50,6 +50,7 @@ class MdsesClient(service_client.ServiceClient):
         resp, body = self.get(url)
         body = json.loads(body)
         self.validate_response(schema.list_mdses, resp, body)
+        # TODO return
         return resp, service_client.ResponseBody(resp, body)
 
     def summary_mds(self):

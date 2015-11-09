@@ -50,7 +50,7 @@ class AppnodesTestJSON(base.BaseVSMAdminTest):
     def test_list_appnodes(self):
         body = self.appnodes_client.list_appnodes()
         appnodes = body['appnodes']
-        LOG.info("=============appnodes: " + str(appnodes))
+        # LOG.info("=============appnodes: " + str(appnodes))
         # TODO wish better than this assert
         self.assertTrue(len(appnodes) >= 0, str(appnodes))
 

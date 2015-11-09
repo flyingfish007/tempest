@@ -33,9 +33,9 @@ class AppnodesClient(service_client.ServiceClient):
             search_opts = {}
         qparams = {}
 
-        for opt, val in search_opts.iteritems():
-            if val:
-                qparams[opt] = val
+        for k, v in search_opts.iteritems():
+            if v:
+                qparams[k] = v
 
         if qparams:
             query_string = "?%s" % urllib.urlencode(qparams)
@@ -50,7 +50,8 @@ class AppnodesClient(service_client.ServiceClient):
         resp, body = self.get(url)
         body = json.loads(body)
         self.validate_response(schema.list_appnodes, resp, body)
-        return service_client.ResponseBody(resp, body)
+        # TODO return
+        return resp, service_client.ResponseBody(resp, body)
 
     def create_appnode(self, **kwargs):
         os_tenant_name = kwargs.get('os_tenant_name', None)
@@ -60,7 +61,7 @@ class AppnodesClient(service_client.ServiceClient):
         os_region_name = kwargs.get('os_region_name', None)
         ssh_user = kwargs.get('ssh_user', None)
 
-        post_body = {
+        post_body = json.dumps({
             'appnodes': {
                 'os_tenant_name': os_tenant_name,
                 'os_username': os_username,
@@ -69,7 +70,7 @@ class AppnodesClient(service_client.ServiceClient):
                 'os_region_name': os_region_name,
                 'ssh_user': ssh_user
             }
-        }
+        })
         url = "appnodes"
         resp, body = self.post(url, post_body)
         body = json.loads(body)
@@ -94,7 +95,7 @@ class AppnodesClient(service_client.ServiceClient):
         ssh_status = ""
         log_info = ""
 
-        post_body = {
+        post_body = json.dumps({
             'appnode': {
                 'os_tenant_name': os_tenant_name,
                 'os_username': os_username,
@@ -105,7 +106,7 @@ class AppnodesClient(service_client.ServiceClient):
                 'ssh_status': ssh_status,
                 'log_info': log_info
             }
-        }
+        })
         url = "appnodes/%s" % appnode_id
         resp, body = self.post(url, post_body)
         body = json.loads(body)

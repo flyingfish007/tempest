@@ -33,9 +33,9 @@ class DevicesClient(service_client.ServiceClient):
             search_opts = {}
         qparams = {}
 
-        for opt, val in search_opts.iteritems():
-            if val:
-                qparams[opt] = val
+        for k, v in search_opts.iteritems():
+            if v:
+                qparams[k] = v
 
         if qparams:
             query_string = "?%s" % urllib.urlencode(qparams)
@@ -58,9 +58,9 @@ class DevicesClient(service_client.ServiceClient):
             search_opts = {}
         qparams = {}
 
-        for opt, val in search_opts.iteritems():
-            if val:
-                qparams[opt] = val
+        for k, v in search_opts.iteritems():
+            if v:
+                qparams[k] = v
 
         if qparams:
             query_string = "?%s" % urllib.urlencode(qparams)
@@ -72,7 +72,7 @@ class DevicesClient(service_client.ServiceClient):
         body = json.loads(body)
         self.validate_response(schema.get_available_disks, resp, body)
         # TODO return
-        return service_client.ResponseBody(resp, body)
+        return resp, service_client.ResponseBody(resp, body)
 
     #TODO get smart info
     def get_smart_info(self):

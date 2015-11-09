@@ -48,8 +48,10 @@ class DevicesTestJSON(base.BaseVSMAdminTest):
     def test_list_devices(self):
         resp, body = self.devices_client.list_devices()
         status = resp['status']
+        # TODO wish better than this assert
         self.assertIn(int(status), self.OK_STATUS)
         devices = body['devices']
+        # TODO wish better than this assert
         self.assertEqual(len(devices) >= 3, True)
 
     @test.idempotent_id('f6497572-7c49-433e-a443-63ac4bc8923c')
@@ -66,6 +68,7 @@ class DevicesTestJSON(base.BaseVSMAdminTest):
             }
         )
         status = resp['status']
+        # TODO wish better than this assert
         self.assertIn(int(status), self.OK_STATUS)
         availables_disks = body['available_disks']
         # TODO wish better than this assert

@@ -61,12 +61,13 @@ class ClustersTestJSON(base.BaseVSMAdminTest):
             return
         resp, body = self.clusters_client.create_cluster()
         status = resp['status']
-        LOG.info("==========body: " + str(body))
-        LOG.info("==========status: " + status)
+        # LOG.info("==========body: " + str(body))
+        # LOG.info("==========status: " + status)
+        # TODO wish better than this assert
         self.assertIn(int(status), self.OK_STATUS)
         servers_body = self.servers_client.list_servers()
         servers = servers_body['servers']
-        LOG.info("=============servers: " + str(servers))
+        # LOG.info("=============servers: " + str(servers))
         active_servers_num = 0
         for server in servers:
             final_status = waiters.wait_for_vsm_server_status(
@@ -74,6 +75,7 @@ class ClustersTestJSON(base.BaseVSMAdminTest):
             )
             if final_status == "Active":
                 active_servers_num = active_servers_num + 1
+        # TODO wish better than this assert
         self.assertEqual(active_servers_num >= 3, True)
 
     @test.idempotent_id('087acd2f-ce75-48e4-9b0b-a82c9ae57578')
@@ -81,9 +83,11 @@ class ClustersTestJSON(base.BaseVSMAdminTest):
         # TODO the rest api of list cluster is hardcode
         resp, body = self.clusters_client.list_clusters()
         status = resp['status']
+        # TODO wish better than this assert
         self.assertIn(int(status), self.OK_STATUS)
         clusters = body['clusters']
-        LOG.info("=============clusters: " + str(clusters))
+        # LOG.info("=============clusters: " + str(clusters))
+        # TODO wish better than this assert
         self.assertTrue(len(clusters) == 1, str(clusters))
 
     @test.idempotent_id('46be542c-8c44-4896-a362-fd5242620a0f')
