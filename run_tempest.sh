@@ -57,7 +57,7 @@ while [ $# -gt 0 ]; do
     -d|--debug) debug=1;;
     -C|--config) config_file=$2; shift;;
     -s|--smoke) testrargs+="smoke";;
-    -t|--parallel) parallel=1;;
+    -p|--parallel) parallel=1;;
     -l|--logging) logging=1;;
     -L|--logging-config) logging_config=$2; shift;;
     --) [ "yes" == "$first_uu" ] || testrargs="$testrargs $1"; first_uu=no  ;;
