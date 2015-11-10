@@ -27,7 +27,7 @@ list_mdses = {
                         'name': {'type': 'string'},
                         'updated_at': {'type': 'string'},
                         'state': {'type': 'string'},
-                        'gid': {'type': 'string'},
+                        'gid': {'type': 'integer'},
                         'address': {'type': 'string'}
                     },
                     'required': ['id', 'name', 'updated_at',

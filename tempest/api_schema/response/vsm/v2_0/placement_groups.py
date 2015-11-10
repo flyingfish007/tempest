@@ -86,6 +86,6 @@ summary_placement_group = {
                 }
             }
         },
-        'required': ['placement_groups']
+        'required': ['placement_group-summary']
     }
 }

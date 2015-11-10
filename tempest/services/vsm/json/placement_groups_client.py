@@ -30,7 +30,7 @@ class PlacementGroupsClient(service_client.ServiceClient):
 
     def list_placement_groups(self, detailed=False, search_opts=None,
                       paginate_opts=None):
-        if paginate_opts:
+        if paginate_opts == None:
             paginate_opts = {}
         if search_opts == None:
             search_opts = {}

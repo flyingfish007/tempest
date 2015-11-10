@@ -64,19 +64,20 @@ class MonitorsClient(service_client.ServiceClient):
     def _action(self, id, action_name, response_key,
                 schema=None, response_class=None,
                 **kwargs):
+        if not kwargs:
+            kwargs = ""
         post_body = json.dumps({action_name: kwargs})
         url = "monitors/%s/action" % id
         resp, body = self.post(url, post_body)
-        if response_key is not None:
+        if response_key is not None or response_key:
             body = json.loads(body)
             self.validate_response(schema, resp, body)
             body = body[response_key]
         else:
             self.validate_response(schema, resp, body)
-        # TODO return
         return resp, response_class(resp, body)
 
     def restart_monitor(self, monitor_id):
-        self._action(monitor_id, "restart", None,
-                     schema=schema.restart_monitor,
-                     response_class=service_client.ResponseBody)
+        return self._action(monitor_id, "restart", None,
+                            schema=schema.restart_monitor,
+                            response_class=service_client.ResponseBody)

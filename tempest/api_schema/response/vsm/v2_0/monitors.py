@@ -29,8 +29,8 @@ list_monitors = {
                         'health': {'type': 'string'},
                         'address': {'type': 'string'}
                     },
-                    'required': ['id', 'name', 'updated_at',
-                                 'state', 'gid', 'address']
+                    'required': ['id', 'name',
+                                 'details', 'health', 'address']
                 }
             }
         },

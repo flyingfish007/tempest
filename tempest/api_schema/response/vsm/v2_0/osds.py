@@ -36,7 +36,7 @@ get_osd = {
                             'rule_id': {'type': 'integer'},
                             'drive_extended_threshold': {'type': 'integer'},
                             'storage_class': {'type': 'string'},
-                            'deleted_at': {'type': 'string'}
+                            'deleted_at': {'type': 'null'}
                         },
                         'required': ['id', 'status', 'name',
                                      'deleted', 'created_at',
@@ -45,7 +45,7 @@ get_osd = {
                                      'storage_class', 'deleted_at']
                     },
                     'zone_id': {'type': 'integer'},
-                    'weight': {'type': 'integer'},
+                    'weight': {'type': 'number'},
                     'deleted': {'type': 'boolean'},
                     'storage_group_id': {'type': 'integer'},
                     'created_at': {'type': 'string'},
@@ -64,7 +64,7 @@ get_osd = {
                             'deleted': {'type': 'boolean'},
                             'created_at': {'type': 'string'},
                             'updated_at': {'type': 'string'},
-                            'interface_type': {'type': 'string'},
+                            'interface_type': {'type': 'null'},
                             'id': {'type': 'integer'},
                             'journal_state': {'type': 'string'},
                             'state': {'type': 'string'},
@@ -73,7 +73,7 @@ get_osd = {
                             'service_id': {'type': 'integer'},
                             'journal': {'type': 'string'},
                             'path': {'type': 'string'},
-                            'deleted_at': {'type': 'string'},
+                            'deleted_at': {'type': 'null'},
                             'total_capacity_kb': {'type': 'integer'},
                             'avail_capacity_kb': {'type': 'integer'}
                         },
@@ -88,7 +88,7 @@ get_osd = {
                                      'avail_capacity_kb']
                     },
                     'cluster_id': {'type': 'integer'},
-                    'deleted_at': {'type': 'string'},
+                    'deleted_at': {'type': 'null'},
                     'device_id': {'type': 'integer'}
                 },
                 'required': ['id', 'cluster_ip', 'storage_group', 'zone_id',
@@ -115,7 +115,7 @@ list_osds = {
                         'id': {'type': 'integer'},
                         'state': {'type': 'string'},
                         'operation_status': {'type': 'string'},
-                        'weight': {'type': 'integer'},
+                        'weight': {'type': 'number'},
                         'updated_at': {'type': 'string'},
                         'service_id': {'type': 'integer'},
                         'osd_name': {'type': 'string'},

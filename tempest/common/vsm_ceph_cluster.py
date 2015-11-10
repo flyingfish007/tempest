@@ -22,6 +22,8 @@ from tempest.common import waiters
 import paramiko
 import glob
 import os
+import fileinput
+import re
 
 CONF = config.CONF
 
@@ -39,7 +41,7 @@ def create_vsm_ceph_cluster(clients):
         return None
     file = open("/tmp/vsm_cluster.lock", 'w')
     file.close()
-    LOG.info("++++++++++++++create_vsm_ceph_cluster++++++++++++++")
+    # LOG.info("++++++++++++++create_vsm_ceph_cluster++++++++++++++")
     resp, body = clients.vsm_clusters_client.create_cluster()
     status = resp['status']
 
@@ -55,7 +57,7 @@ def create_vsm_ceph_cluster(clients):
     return None
 
 def wait_server_active(clients):
-    LOG.info("++++++++++++++wait_server_active++++++++++++++")
+    # LOG.info("++++++++++++++wait_server_active++++++++++++++")
     servers_body = clients.vsm_servers_client.list_servers()
     servers = servers_body['servers']
     active_servers_num = 0
@@ -72,18 +74,18 @@ def wait_server_active(clients):
     return exist
 
 def check_vsm_cluster_exist(clients):
-    LOG.info("++++++++++++++check_vsm_cluster_exist++++++++++++++")
+    # LOG.info("++++++++++++++check_vsm_cluster_exist++++++++++++++")
     servers_body = clients.vsm_servers_client.list_servers()
     servers = servers_body['servers']
-    LOG.info("++++check_vsm_cluster_exist, servers++++++++++++++" + str(servers))
+    # LOG.info("++++check_vsm_cluster_exist, servers++++++++++++++" + str(servers))
     for server in servers:
         if server['status'] == "Active":
             exist = "yes"
             return exist
     return "no"
 
-def cleanup_vsm_cluster():
-    LOG.info("++++++++++++++cleanup_vsm_cluster++++++++++++++")
+def cleanup_vsm_cluster(clients):
+    # LOG.info("++++++++++++++cleanup_vsm_cluster++++++++++++++")
     floating_ip = CONF.vsm.floating_ip
     username = CONF.vsm.ssh_username
     password = CONF.vsm.ssh_password
@@ -93,16 +95,53 @@ def cleanup_vsm_cluster():
     s.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     s.connect(floating_ip, port=22, username=username, password=password)
 
-    LOG.info("=============cleanup vsm controller")
-    stdin, stdout, stderr = s.exec_command("clean-data -f")
+    # LOG.info("=============cleanup vsm controller")
+    stdin, stdout, stderr = s.exec_command("sudo clean-data -f")
+    stdout.read()
     stdin, stdout, stderr = s.exec_command("agent-token")
     token_id = stdout.read().strip("\n")
 
-    LOG.info("=============cleanup vsm agent")
-    cmd = "for ip in `source /tmp/%s;echo $AGENT_ADDRESS_LIST`; do " \
-          "ssh $ip 'sudo replace-str %s; clean-data -f;" \
+    # LOG.info("=============cleanup vsm agent")
+    cmd = "for ip in `source /tmp/%s/installrc;echo $AGENT_ADDRESS_LIST`; do " \
+          "ssh -t $ip 'sudo replace-str %s; sudo clean-data -f;" \
           "sudo service vsm-agent restart;" \
-          "sudo service vsm-physical restart'" % (vsm_release, token_id)
+          "sudo service vsm-physical restart'; done" % (vsm_release, token_id)
     stdin, stdout, stderr = s.exec_command(cmd)
+    stdout.read()
+    s.close()
 
-    LOG.info("=============cleanup OVER success")
+    os.system("sudo rm -rf /tmp/keyrc")
+    t = paramiko.Transport((floating_ip, 22))
+    t.connect(username=username, password=password)
+    sftp = paramiko.SFTPClient.from_transport(t)
+    if username == "root":
+        remotepath = "/root/keyrc"
+    else:
+        remotepath = "/home/%s/keyrc" % username
+    localpath = "/tmp/keyrc"
+    sftp.get(remotepath, localpath)
+    t.close()
+
+    def _replaceInFile(file, oldstr, newstr):
+        for line in fileinput.input(file, inplace=True):
+            if re.search(oldstr, line):
+                line = line.replace(oldstr, newstr)
+            print line,
+
+    cwd = os.getcwd()
+    tempest_conf = "%s/etc/tempest.conf" % cwd
+    os.system(
+        "sed -i \"s/^admin_password = *.*/#admin_password = "
+        "<None>/g\" %s" % tempest_conf)
+
+    file = open("/tmp/keyrc")
+    file.readline()
+    file.readline()
+    line = file.readline()
+    if line:
+        os_password = line.strip("\n").split(" ")[1].split("=")[1]
+        _replaceInFile(tempest_conf,
+                       "#admin_password = <None>",
+                       "admin_password = %s" % os_password)
+
+    # LOG.info("=============cleanup OVER success")

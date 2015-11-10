@@ -38,7 +38,7 @@ class OsdsClient(service_client.ServiceClient):
 
     def list_osds(self, detailed=False, search_opts=None,
                       paginate_opts=None):
-        if paginate_opts:
+        if paginate_opts == None:
             paginate_opts = {}
         if search_opts == None:
             search_opts = {}
@@ -71,6 +71,8 @@ class OsdsClient(service_client.ServiceClient):
     def _action(self, id, action_name, response_key,
                 schema=None, response_class=None,
                 **kwargs):
+        if not kwargs:
+            kwargs = ""
         post_body = json.dumps({action_name: kwargs})
         url = "osds/%s/action" % id
         resp, body = self.post(url, post_body)
@@ -84,14 +86,14 @@ class OsdsClient(service_client.ServiceClient):
         return resp, response_class(resp, body)
 
     def restart_osd(self, osd_id):
-        self._action(osd_id, "restart", None,
-                     schema=schema.restart_osd,
-                     response_class=service_client.ResponseBody)
+        return self._action(osd_id, "restart", None,
+                            schema=schema.restart_osd,
+                            response_class=service_client.ResponseBody)
 
     def remove_osd(self, osd_id):
-        self._action(osd_id, "remove", None,
-                     schema=schema.remove_osd,
-                     response_class=service_client.ResponseBody)
+        return self._action(osd_id, "remove", None,
+                            schema=schema.remove_osd,
+                            response_class=service_client.ResponseBody)
 
     def add_new_disks_to_cluster(self, **kwargs):
         server_id = kwargs.get("server_id", None)
@@ -118,13 +120,13 @@ class OsdsClient(service_client.ServiceClient):
         return resp, service_client.ResponseBody(resp, body)
 
     def restore_osd(self, osd_id):
-        self._action(osd_id, "restore", None,
-                     schema=schema.restore_osd,
-                     response_class=service_client.ResponseBody)
+        return self._action(osd_id, "restore", None,
+                            schema=schema.restore_osd,
+                            response_class=service_client.ResponseBody)
 
     def refresh_osd(self):
         url = "osds/refresh"
-        resp, body = self.post(url, {})
+        resp, body = self.post(url, "")
         self.validate_response(schema.refresh_osd, resp, body)
         # TODO return
         return resp, service_client.ResponseBody(resp, body)

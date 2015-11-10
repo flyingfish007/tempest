@@ -82,7 +82,7 @@ class ClustersClient(service_client.ServiceClient):
 
     def refresh_cluster(self):
         url = "clusters/refresh"
-        resp, body = self.post(url, {})
+        resp, body = self.post(url, "")
         self.validate_response(schema.refresh_cluster, resp, body)
         # TODO return
         return resp, service_client.ResponseBody(resp, body)

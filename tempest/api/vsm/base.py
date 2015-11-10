@@ -83,7 +83,7 @@ class BaseVSMTest(tempest.test.BaseTestCase):
 
     @classmethod
     def cleanup_vsm_cluster(cls):
-        vsm_ceph_cluster.cleanup_vsm_cluster()
+        vsm_ceph_cluster.cleanup_vsm_cluster(cls.os)
 
     def wait_for(self, condition):
         """Repeatedly calls condition() until a timeout."""

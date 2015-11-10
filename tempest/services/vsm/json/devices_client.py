@@ -67,7 +67,7 @@ class DevicesClient(service_client.ServiceClient):
         else:
             query_string = ""
 
-        url = "devices%s" % query_string
+        url = "devices/get_available_disks%s" % query_string
         resp, body = self.get(url)
         body = json.loads(body)
         self.validate_response(schema.get_available_disks, resp, body)
