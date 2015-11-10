@@ -58,7 +58,7 @@ class ServersTestJSON(base.BaseVSMAdminTest):
     def test_list_servers(self):
         body = self.servers_client.list_servers()
         servers = body['servers']
-        LOG.info("=============servers: " + str(servers))
+        # LOG.info("=============servers: " + str(servers))
         servers_from_conf  = CONF.vsm.servers_name
         self.assertEqual(len(servers) == len(servers_from_conf) - 1, True)
 
