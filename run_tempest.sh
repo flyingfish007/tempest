@@ -151,7 +151,7 @@ if [ $env_never_new -eq 0 ]
 then
   # Apply new servers for vsm nodes
   echo -e "Apply new servers for vsm nodes and deploy vsm"
-  python tools/vsm_env.py
+  ${wrapper} python tools/vsm_env.py
 fi
 
 
