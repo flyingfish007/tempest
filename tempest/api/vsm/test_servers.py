@@ -59,8 +59,8 @@ class ServersTestJSON(base.BaseVSMAdminTest):
         body = self.servers_client.list_servers()
         servers = body['servers']
         # LOG.info("=============servers: " + str(servers))
-        servers_from_conf  = CONF.vsm.servers_name
-        self.assertEqual(len(servers) == len(servers_from_conf) - 1, True)
+        servers_from_conf  = CONF.vsm.agent_servers_name
+        self.assertEqual(len(servers) == len(servers_from_conf), True)
 
     @test.idempotent_id('e6d4f819-c2e4-4308-b7a6-43e48c80c701')
     def test_add_server(self):

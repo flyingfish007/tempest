@@ -28,14 +28,14 @@ CONF = config.CONF
 class ClustersClient(service_client.ServiceClient):
 
     def create_cluster(self, params=None):
-        servers = CONF.vsm.servers_name
+        servers = CONF.vsm.agent_servers_name
         servers_list = []
-        while len(servers)  > 1:
+        while len(servers) > 0:
             servers_list.append(
                 {
                     "is_storage": True,
                     "is_monitor": True,
-                    "id": len(servers) - 1
+                    "id": len(servers)
                 }
             )
             servers.pop()
