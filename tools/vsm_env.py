@@ -66,7 +66,14 @@ class ApplyServers(object):
         self.ssh_username = CONF.get("vsm", "ssh_username")
         self.ssh_password = CONF.get("vsm", "ssh_password")
         self.os_type = CONF.get("vsm", "os_type")
+        self.floating_ip = CONF.get("vsm", "floating_ip")
         self.fixed_ip_list = []
+        self.vsm_openstack_server_name = \
+            CONF.get("vsm", "vsm_openstack_server_name")
+        self.vsm_openstack_ssh_username = \
+            CONF.get("vsm", "vsm_openstack_ssh_username")
+        self.vsm_openstack_ssh_password = \
+            CONF.get("vsm", "vsm_openstack_ssh_password")
 
         self.novaclient = \
             nc_client.Client(
@@ -197,7 +204,7 @@ class ApplyServers(object):
                   inred("[-] The volume " + volume_name + " is still not available, please "
                                                       "check it by yourself"))
 
-    def run_command_remote_server(self, ip, cmd):
+    def run_command_remote_server(self, ip, username, password, cmd):
         """
 
         :param str ip: Remote IP to connect
@@ -206,8 +213,8 @@ class ApplyServers(object):
         """
         hostname_or_ip = ip
         port = 22
-        username = self.ssh_username
-        password = self.ssh_password
+        # username = self.ssh_username
+        # password = self.ssh_password
         print_msg("INFO", "[-] run command", "[-] " + cmd + " on " + ip)
 
         s = paramiko.SSHClient()
@@ -351,11 +358,11 @@ class ApplyServers(object):
 
                 if self.os_type == "ubuntu":
                     self.run_command_remote_server(
-                        floating_ip,
+                        floating_ip, self.ssh_username, self.ssh_password,
                         "sudo chmod 0440 /etc/sudoers.d/%s" % self.ssh_username)
                 else:
                     self.run_command_remote_server(
-                        floating_ip,
+                        floating_ip, self.ssh_username, self.ssh_password,
                         "chmod 0440 /etc/sudoers.d/%s" % self.ssh_username)
                 print_msg("INFO", "[-] create server",
                           "[-] Generate ssh-key for user %s" % self.ssh_username)
@@ -417,11 +424,13 @@ class ApplyServers(object):
                            "echo %s |tee /etc/hostname;" \
                            "reboot" % server_name
 
-                ip = self.run_command_remote_server(floating_ip, cmd1)
+                ip = self.run_command_remote_server(floating_ip, self.ssh_username,
+                                                    self.ssh_password, cmd1)
                 # print(ip.replace("\n", ""))
                 self.fixed_ip_list.append(ip.replace("\n", ""))
                 if vsm_server_type == "agent":
-                    self.run_command_remote_server(floating_ip, cmd2)
+                    self.run_command_remote_server(floating_ip, self.ssh_username,
+                                                   self.ssh_password, cmd2)
 
                 if len(self.fixed_ip_list) == len(self.servers_name.split(",")):
                     ip_str = ",".join(self.fixed_ip_list)
@@ -437,7 +446,8 @@ class ApplyServers(object):
                             cmd = "echo \"%s  %s\" | tee -a /etc/hosts" % (
                                 self.fixed_ip_list[i], servers_name_list[i].strip(" ")
                             )
-                        self.run_command_remote_server(floating_ip, cmd)
+                        self.run_command_remote_server(floating_ip, self.ssh_username,
+                                                       self.ssh_password, cmd)
                         i = i + 1
                     for ip in self.fixed_ip_list:
                         print_msg("INFO", "[-] create server",
@@ -452,7 +462,8 @@ class ApplyServers(object):
                         ssh.expect("password")
                         ssh.sendline(self.ssh_password)
                         time.sleep(1)
-                self.run_command_remote_server(floating_ip, cmd3)
+                self.run_command_remote_server(floating_ip, self.ssh_username,
+                                               self.ssh_password, cmd3)
 
                 break
             else:
@@ -460,6 +471,370 @@ class ApplyServers(object):
                 continue
         if vsm_server_type == "agent":
             self.novaclient.servers.remove_floating_ip(server.id,floating_ip)
+
+    def create_openstack_server(self, server_name, image_name, flavor_id, net_id_list,
+                                security_group="default", key_name="demo-key",
+                                floating_ip=None, vsm_ip_list=None, script_path=None):
+
+        if not os.path.isfile(script_path):
+            print_msg("ERROR", "[-] create openstack server", "[-] Script file does not exist")
+
+        if not server_name:
+            print_msg("ERROR", "[-] create openstack server", "[-] Server name is null")
+
+        image = None
+        if not image_name:
+            print_msg("ERROR", "[-] create openstack server", "[-] Image name is null")
+        else:
+            image = self.image_available(image_name)
+
+        flavor = None
+        if not flavor_id:
+            print_msg("ERROR", "[-] create openstack server", "[-] Flavor id is null")
+        else:
+            flavor = self.flavor_available(flavor_id)
+
+        net = []
+        if not net_id_list:
+            print_msg("ERROR", "[-] create openstack server", "[-] Network id is null")
+        else:
+            for net_id in net_id_list:
+                net.append(self.net_available(net_id))
+
+        server_list = self.novaclient.servers.list()
+        for server in server_list:
+            if server.name == server_name:
+                print_msg("INFO", "[-] create openstack server", "[-] Begin to delete %s" % server_name)
+                self.novaclient.servers.delete(server.id)
+                wait_time = 1
+                while wait_time < self.timeout:
+                    time.sleep(wait_time)
+                    print_msg("INFO", "[-] create openstack server",
+                              "[-] Waiting %s seconds to delete server %s" %
+                              (wait_time, server_name))
+                    server_list = self.novaclient.servers.list()
+                    if server_name in [server.name for server in server_list]:
+                        wait_time = wait_time + 1
+                        continue
+                    else:
+                        break
+                print_msg("INFO", "[-] create openstack server",
+                          ingreen("[-] Old server %s has been deleted" % server_name))
+
+        image_id = image.id
+
+        nics = []
+        for n in net:
+            nics.append({"net-id": n.id})
+
+        server = self.novaclient.servers.create(
+            server_name,
+            image_id,
+            flavor.id,
+            security_groups=[security_group],
+            key_name=key_name,
+            nics=nics
+        )
+        wait_time = 1
+        while wait_time < 100:
+            print_msg("INFO", "[-] create openstack server",
+                      "[-] Waiting %s seconds to create server %s" %
+                      (wait_time, server_name))
+            time.sleep(wait_time)
+            server = self.novaclient.servers.get(server.id)
+            if server.status == "ACTIVE":
+                print_msg("INFO", "[-] create openstack server",
+                          ingreen("[-] The server " + server.name + " is active"))
+                print_msg("INFO", "[-] create openstack server",
+                          "[-] Begin to associate floating ip to server")
+                while True:
+                    try:
+                        self.novaclient.servers.add_floating_ip(server.id, floating_ip)
+                        ssh = pexpect.spawn('ssh -t %s@%s ls' %
+                                            (self.vsm_openstack_ssh_username, floating_ip))
+                        index = ssh.expect(["continue connecting", "password"])
+                        if index == 0:
+                            time.sleep(1)
+                            ssh.sendline("yes")
+                            time.sleep(1)
+                            ssh.expect("password")
+                            time.sleep(1)
+                            ssh.sendline(self.vsm_openstack_ssh_password)
+                        else:
+                            time.sleep(1)
+                            ssh.sendline(self.vsm_openstack_ssh_password)
+                        break
+                    except Exception:
+                        time.sleep(5)
+                        print_msg("INFO", "[-] create openstack server",
+                                  "[-] Waiting 5 seconds to associate floating ip")
+                        self.novaclient.servers.remove_floating_ip(server.id,floating_ip)
+                print_msg("INFO", "[-] create openstack server",
+                          "[-] End to associate floating ip to server")
+
+                if self.vsm_openstack_ssh_username != self.ssh_username and \
+                    self.vsm_openstack_ssh_username == "root":
+                    cmd = "useradd intel -m -s /bin/bash"
+                    time.sleep(5)
+                    self.run_command_remote_server(floating_ip,
+                                                   self.vsm_openstack_ssh_username,
+                                                   self.vsm_openstack_ssh_password,
+                                                   cmd)
+                    ssh = pexpect.spawn('ssh -t %s@%s sudo passwd %s' %
+                                        (self.vsm_openstack_ssh_username,
+                                         floating_ip,
+                                         self.ssh_username))
+                    time.sleep(1)
+                    ssh.expect("password")
+                    time.sleep(1)
+                    ssh.sendline(self.vsm_openstack_ssh_password)
+                    time.sleep(1)
+                    ssh.expect("password")
+                    time.sleep(1)
+                    ssh.sendline(self.ssh_password)
+                    time.sleep(1)
+                    ssh.expect("password")
+                    time.sleep(1)
+                    ssh.sendline(self.ssh_password)
+
+                print_msg("INFO", "[-] create server",
+                          "[-] Set NOPASSWD for user %s" % self.ssh_username)
+                while True:
+                    try:
+                        if self.vsm_openstack_ssh_username != self.ssh_username and \
+                                self.vsm_openstack_ssh_username == "root":
+                            ssh = pexpect.spawn('ssh -t %s@%s \'echo "%s ALL=(ALL) NOPASSWD: ALL" '
+                                                '| tee /etc/sudoers.d/%s\'' %
+                                                (self.vsm_openstack_ssh_username,
+                                                 floating_ip,
+                                                 self.ssh_username,
+                                                 self.ssh_username))
+                        else:
+                            ssh = pexpect.spawn(
+                                'ssh -t %s@%s \'echo "%s ALL=(ALL) NOPASSWD: ALL" '
+                                '| tee /etc/sudoers.d/%s\'' %
+                                (self.vsm_openstack_ssh_username, floating_ip,
+                                 self.vsm_openstack_ssh_username,
+                                 self.vsm_openstack_ssh_username))
+                        index = ssh.expect(["continue connecting", "password"])
+                        if index == 0:
+                            time.sleep(1)
+                            ssh.sendline("yes")
+                            time.sleep(1)
+                            ssh.expect("password")
+                            time.sleep(1)
+                            ssh.sendline(self.vsm_openstack_ssh_password)
+                        else:
+                            time.sleep(1)
+                            ssh.sendline(self.vsm_openstack_ssh_password)
+                        if self.vsm_openstack_ssh_username != "root":
+                            ssh.expect("password")
+                            ssh.sendline(self.vsm_openstack_ssh_password)
+                        break
+                    except Exception:
+                        print_msg("INFO", "[-] create openstack server",
+                                  "[-] Waiting for 10 seconds that "
+                                  "floating ip is not ready...")
+                        time.sleep(10)
+
+                if self.vsm_openstack_ssh_username != self.ssh_username and \
+                    self.vsm_openstack_ssh_username == "root":
+                    cmd = "chmod 0440 /etc/sudoers.d/%s" % self.ssh_username
+                else:
+                    cmd = "chmod 0440 /etc/sudoers.d/%s" % self.vsm_openstack_ssh_username
+
+                self.run_command_remote_server(
+                    floating_ip, self.vsm_openstack_ssh_username,
+                    self.vsm_openstack_ssh_password, cmd)
+
+                while True:
+                    try:
+                        if self.vsm_openstack_ssh_username != self.ssh_username and \
+                            self.vsm_openstack_ssh_username == "root":
+                            print_msg("INFO", "[-] create openstack server",
+                                      "[-] Generate ssh-key for user %s" % self.ssh_username)
+                            ssh = pexpect.spawn('ssh -t %s@%s \'ssh-keygen -t rsa\''
+                                                % (self.ssh_username, floating_ip))
+                            ssh.expect("password")
+                            ssh.sendline(self.ssh_password)
+                        else:
+                            print_msg("INFO", "[-] create openstack server",
+                                      "[-] Generate ssh-key for user %s" % self.vsm_openstack_ssh_username)
+                            ssh = pexpect.spawn('ssh -t %s@%s \'ssh-keygen -t rsa\''
+                                                % (self.vsm_openstack_ssh_username, floating_ip))
+                            ssh.expect("password")
+                            ssh.sendline(self.vsm_openstack_ssh_password)
+                        ssh.expect("Enter file")
+                        ssh.sendline("")
+                        ssh.expect("Enter passphrase")
+                        ssh.sendline("")
+                        ssh.expect("Enter same passphrase")
+                        ssh.sendline("")
+                        break
+                    except Exception:
+                        print_msg("WARNING", "[-] create openstack server",
+                                  "[-] connecting to %s failed, wait for 5 seconds" % floating_ip)
+                        time.sleep(5)
+
+                cmd1 = "ifconfig |grep broadcast| awk -F \" \" " \
+                       "'{print $2}'"
+
+                ip = self.run_command_remote_server(floating_ip, self.vsm_openstack_ssh_username,
+                                                    self.vsm_openstack_ssh_password, cmd1)
+                ip = ip.replace("\n", "")
+                openstack_hostname = self.run_command_remote_server(
+                    floating_ip, self.vsm_openstack_ssh_username,
+                    self.vsm_openstack_ssh_password, "hostname").replace("\n", "")
+
+                for vsm_ip in vsm_ip_list:
+                    print_msg("INFO", "[-] create openstack server",
+                              "[-] echo %s %s to %s /etc/hosts" % (ip, openstack_hostname, vsm_ip))
+                    cmd = "ssh -t %s 'echo \"%s  %s\" | sudo tee -a /etc/hosts'" \
+                          % (vsm_ip, ip, openstack_hostname)
+                    self.run_command_remote_server(self.floating_ip,
+                                                   self.ssh_username,
+                                                   self.ssh_password,
+                                                   cmd)
+
+                    print_msg("INFO", "[-] create openstack server",
+                              "[-] xtrust between %s and %s" % (vsm_ip, ip))
+                    if self.vsm_openstack_ssh_username != self.ssh_username and \
+                        self.vsm_openstack_ssh_username == "root":
+                        ssh = pexpect.spawn('ssh -t %s@%s \'ssh -t %s ssh-copy-id %s\''
+                                            % (self.ssh_username,
+                                               self.floating_ip, vsm_ip, ip))
+                    else:
+                        ssh = pexpect.spawn('ssh -t %s@%s \'ssh -t %s ssh-copy-id %s@%s\''
+                                            % (self.ssh_username,
+                                               self.floating_ip, vsm_ip,
+                                               self.vsm_openstack_ssh_username, ip))
+                    ssh.expect("password")
+                    ssh.sendline(self.ssh_password)
+                    ssh.expect("yes/no")
+                    ssh.sendline("yes")
+                    ssh.expect("password")
+                    ssh.sendline(self.vsm_openstack_ssh_password)
+                    time.sleep(1)
+
+                print_msg("INFO", "[-] create openstack server",
+                          "[-] xtrust between %s and %s" % (self.floating_ip, openstack_hostname))
+                ssh = pexpect.spawn('ssh -t %s@%s \'ssh-copy-id %s@%s\''
+                                    % (self.ssh_username,
+                                       self.floating_ip,
+                                       self.vsm_openstack_ssh_username,
+                                       openstack_hostname))
+                ssh.expect("password")
+                ssh.sendline(self.ssh_password)
+                ssh.expect("yes/no")
+                ssh.sendline("yes")
+                ssh.expect("password")
+                ssh.sendline(self.vsm_openstack_ssh_password)
+
+                self.run_command_remote_server(floating_ip,
+                                               self.vsm_openstack_ssh_username,
+                                               self.vsm_openstack_ssh_password,
+                                               "sed -i \"s/192.168.1.54 controller/%s controller/g\" /etc/hosts" % ip)
+
+                if self.vsm_openstack_ssh_username != self.ssh_username and \
+                    self.vsm_openstack_ssh_username == "root":
+                    ssh = pexpect.spawn('ssh -t %s@%s \'ssh-copy-id %s@%s\''
+                                        % (self.ssh_username,
+                                           floating_ip,
+                                           self.ssh_username,
+                                           openstack_hostname))
+                    ssh.expect("password")
+                    ssh.sendline(self.ssh_password)
+                    ssh.expect("yes/no")
+                    ssh.sendline("yes")
+                    ssh.expect("password")
+                    ssh.sendline(self.ssh_password)
+                else:
+                    ssh = pexpect.spawn('ssh -t %s@%s \'ssh-copy-id %s@%s\''
+                                        % (self.vsm_openstack_ssh_username,
+                                           floating_ip,
+                                           self.vsm_openstack_ssh_username,
+                                           openstack_hostname))
+                    ssh.expect("password")
+                    ssh.sendline(self.vsm_openstack_ssh_password)
+                    ssh.expect("yes/no")
+                    ssh.sendline("yes")
+                    ssh.expect("password")
+                    ssh.sendline(self.vsm_openstack_ssh_password)
+
+                if self.vsm_openstack_ssh_username != self.ssh_username and \
+                    self.vsm_openstack_ssh_username == "root":
+                    ssh = pexpect.spawn('ssh -t %s@%s \'ssh-copy-id %s@%s\''
+                                        % (self.ssh_username,
+                                           floating_ip,
+                                           self.ssh_username,
+                                           ip))
+                    ssh.expect("password")
+                    ssh.sendline(self.ssh_password)
+                    # ssh.expect("yes/no")
+                    # ssh.sendline("yes")
+                else:
+                    ssh = pexpect.spawn('ssh -t %s@%s \'ssh-copy-id %s@%s\''
+                                        % (self.vsm_openstack_ssh_username,
+                                           floating_ip,
+                                           self.vsm_openstack_ssh_username,
+                                           ip))
+                    ssh.expect("password")
+                    ssh.sendline(self.vsm_openstack_ssh_password)
+                    # ssh.expect("yes/no")
+                    # ssh.sendline("yes")
+                print("+++++++++++++++++++++here")
+
+                localpath = CONF.get("vsm", "vsm_openstack_script_path")
+                localfile = localpath.split("/")[-1]
+                remotepath = "/tmp/" + localfile
+                while True:
+                    try:
+                        t = paramiko.Transport(floating_ip, 22)
+                        t.connect(username=self.vsm_openstack_ssh_username,
+                                  password=self.vsm_openstack_ssh_password)
+                        sftp = paramiko.SFTPClient.from_transport(t)
+                        sftp.put(localpath, remotepath)
+                        print_msg("INFO", "[-] create openstack server",
+                                  "[-] transport script to openstack node")
+                        t.close()
+                        break
+                    except Exception:
+                        time.sleep(5)
+                        print_msg("INFO", "[-] create openstack server",
+                                  "[-] waiting the openstack server is active!")
+
+                self.run_command_remote_server(floating_ip,
+                                               self.vsm_openstack_ssh_username,
+                                               self.vsm_openstack_ssh_password,
+                                               "chmod 755 /tmp/%s;cd /tmp;./%s" %
+                                               (localfile, localfile))
+                while True:
+                    try:
+                        ssh = pexpect.spawn('ssh -t %s@%s ls' %
+                                            (self.vsm_openstack_ssh_username, floating_ip))
+                        index = ssh.expect(["continue connecting", "password"])
+                        if index == 0:
+                            time.sleep(1)
+                            ssh.sendline("yes")
+                            time.sleep(1)
+                            ssh.expect("password")
+                            time.sleep(1)
+                            ssh.sendline(self.vsm_openstack_ssh_password)
+                        else:
+                            time.sleep(1)
+                            ssh.sendline(self.vsm_openstack_ssh_password)
+                        print_msg("INFO", "[-] create openstack server",
+                                  "[-] the openstack server is running")
+                        break
+                    except Exception:
+                        time.sleep(5)
+                        print_msg("INFO", "[-] create openstack server",
+                                  "[-] Waiting 5 seconds to wait the openstack "
+                                  "server is running")
+                break
+            else:
+                wait_time = wait_time + 1
+                continue
 
 
 class DeployVSM(object):
@@ -796,6 +1171,25 @@ def main():
             volumes_list=None,
             vsm_server_type="controller"
         )
+
+        # create openstack server
+        vsm_openstack_server_name = CONF.get("vsm", "vsm_openstack_server_name")
+        vsm_openstack_floating_ip = CONF.get("vsm", "vsm_openstack_floating_ip")
+        vsm_openstack_image_name = CONF.get("vsm", "vsm_openstack_image_name")
+        vsm_openstack_flavor_id = CONF.get("vsm", "vsm_openstack_flavor_id")
+        vsm_openstack_net_id_list = CONF.get("vsm", "vsm_openstack_net_id_list")
+        vsm_openstack_net_id_list = vsm_openstack_net_id_list.split(",")
+        vsm_openstack_script_path = CONF.get("vsm", "vsm_openstack_script_path")
+        apply_servers.create_openstack_server(vsm_openstack_server_name,
+                                              vsm_openstack_image_name,
+                                              vsm_openstack_flavor_id,
+                                              vsm_openstack_net_id_list,
+                                              security_group="default",
+                                              key_name="demo-key",
+                                              floating_ip=vsm_openstack_floating_ip,
+                                              vsm_ip_list=apply_servers.fixed_ip_list,
+                                              script_path=vsm_openstack_script_path)
+
         deploy_vsm = DeployVSM()
         deploy_vsm.deploy_vsm(apply_servers.fixed_ip_list)
         deploy_vsm.config_tempest()

@@ -1,0 +1,101 @@
+#！/bin/bash
+#log function
+function log_info ()
+{
+DATE_N=`date "+%Y-%m-%d %H:%M:%S"`
+USER_N=`whoami`
+echo "${DATE_N} ${USER_N} execute $0 [INFO] $@" >>/var/log/modify.log
+
+}
+function log_error ()
+{
+DATE_N=`date "+%Y-%m-%d %H:%M:%S"`
+USER_N=`whoami`
+echo -e "\033[41;37m ${DATE_N} ${USER_N} execute $0 [ERROR] $@ \033[0m" >>/var/log/modify.log
+
+}
+LOCAL_IPP_1=`ifconfig  eth1   | grep Bcast | awk -F " " '{print$2}' | awk -F ":" '{print$2}'`
+LOCAL_IPP=`ifconfig  eth0   | grep Bcast | awk -F " " '{print$2}' | awk -F ":" '{print$2}'`
+
+function fn_modify () {
+sed -i "s/192.168.1.14/${LOCAL_IPP}/g" /etc/hosts
+if [ $? -eq 0 ]
+then
+	log_info "sed -i "s/192.168.1.14/${LOCAL_IPP}/g" /etc/hosts. "
+	echo "modify hosts sucessed."
+else
+	log_error "sed -i "s/192.168.1.14/${LOCAL_IPP}/g" /etc/hosts failed."
+	echo "modify hosts failed."
+	exit
+fi
+
+dhclient  eth1  && sleep 20
+
+sed -i "s/110.1.0.65/${LOCAL_IPP_1}/g" /etc/network/interfaces
+if [ $? -eq 0 ]
+then
+	log_info "sed -i "s/110.1.0.65/${LOCAL_IPP_1}/g" /etc/network/interfaces. "
+	echo "modify interface sucessed."
+else
+	log_error "sed -i "s/110.1.0.65/${LOCAL_IPP_1}/g" /etc/network/interfaces failed."
+	echo "modify interface failed"
+	exit
+fi
+cp -a  /etc/mysql/conf.d/mysqld_openstack.cnf  /etc/mysql/conf.d/mysqld_openstack.cnf_bak-1 && \
+sed  -i "s/192.168.1.14/${LOCAL_IPP}/g" /etc/mysql/conf.d/mysqld_openstack.cnf
+if [ $? -eq 0 ]
+then
+	log_info "sed  -i "s/192.168.1.14/${LOCAL_IPP}/g" /etc/mysql/conf.d/mysqld_openstack.cnf sucessed. "
+	echo "modify /etc/mysql/conf.d/mysqld_openstack.cnf  sucessed."
+else
+	log_error "sed  -i "s/192.168.1.14/${LOCAL_IPP}/g" /etc/mysql/conf.d/mysqld_openstack.cnf  failed."
+	echo "modify /etc/mysql/conf.d/mysqld_openstack.cnf  failed"
+	exit
+fi
+
+cp -a  /etc/nova/nova.conf /etc/nova/nova.conf_bak-1 && \
+sed  -i "s/192.168.1.14/${LOCAL_IPP}/g"    /etc/nova/nova.conf
+if [ $? -eq 0 ]
+then
+	log_info "sed  -i "s/192.168.1.14/${LOCAL_IPP}/g"    /etc/nova/nova.conf sucessed. "
+	echo "modify  /etc/nova/nova.conf  sucessed."
+else
+	log_error "sed  -i "s/192.168.1.14/${LOCAL_IPP}/g"    /etc/nova/nova.conf failed."
+	echo "modify  /etc/nova/nova.conf  failed"
+	exit
+fi
+cp -a  /etc/neutron/plugins/ml2/linuxbridge_agent.ini   /etc/neutron/plugins/ml2/linuxbridge_agent.ini_bak-1 && \
+sed  -i "s/192.168.1.14/${LOCAL_IPP}/g"   /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+if [ $? -eq 0 ]
+then
+	log_info "sed  -i "s/192.168.1.14/${LOCAL_IPP}/g"   /etc/neutron/plugins/ml2/linuxbridge_agent.ini sucessed. "
+	echo "modify  /etc/nova/nova.conf  sucessed."
+else
+	log_error "sed  -i "s/192.168.1.14/${LOCAL_IPP}/g"   /etc/neutron/plugins/ml2/linuxbridge_agent.ini failed."
+	echo "modify  /etc/nova/nova.conf failed"
+	exit
+fi
+
+cp -a /etc/cinder/cinder.conf /etc/cinder/cinder.conf_bak-1 && \
+sed  -i "s/192.168.1.14/${LOCAL_IPP}/g"  /etc/cinder/cinder.conf
+if [ $? -eq 0 ]
+then
+	log_info "sed  -i "s/192.168.1.14/${LOCAL_IPP}/g"  /etc/cinder/cinder.conf sucessed. "
+	echo "modify  /etc/cinder/cinder.conf sucessed."
+else
+	log_error "sed  -i "s/192.168.1.14/${LOCAL_IPP}/g"  /etc/cinder/cinder.conf failed."
+	echo "modify  /etc/cinder/cinder.conf failed"
+	exit
+fi
+
+
+echo -e "\033[32m ################################# \033[0m"
+echo -e "\033[32m ##   modify config sucessed.#### \033[0m"
+echo -e "\033[32m ################################# \033[0m"
+
+echo -e "\033[41;37m begin to reboot system to enforce configuration files \033[0m"
+sleep 2
+reboot
+}
+
+fn_modify

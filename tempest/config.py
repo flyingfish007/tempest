@@ -293,9 +293,54 @@ VsmGroup = [
                default="/opt/tempest/tools/2.0.0-216.tar.gz",
                help="The release package of vsm"),
     cfg.IntOpt('timeout',
-               default=180,
+               default=300,
                help="Timeout in seconds to wait for ping to "
-                    "succeed.")
+                    "succeed."),
+    cfg.StrOpt('vsm_openstack_server_name',
+               default="test-openstack",
+               help="The vsm openstack server name."),
+    cfg.StrOpt('vsm_openstack_floating_ip',
+               default="192.168.7.79",
+               help="The floating ip for vsm openstack env"),
+    cfg.StrOpt('vsm_openstack_username',
+               help="Administrative Username to use for "
+                    "Keystone API requests."),
+    cfg.StrOpt('vsm_openstack_password',
+               help="API key to use when authenticating as admin."),
+    cfg.StrOpt('vsm_openstack_tenant_name',
+               help="Administrative Tenant name to use for Keystone API "
+                    "requests."),
+    cfg.StrOpt('vsm_openstack_auth_uri',
+               help="Full URI of the OpenStack Identity API (Keystone), v2"),
+    cfg.StrOpt('vsm_openstack_auth_version',
+               default='v2.0',
+               help="Identity API version to be used for authentication "
+                    "for API tests."),
+    cfg.StrOpt('vsm_openstack_region',
+               help="The openstack region name to use. If empty, the value of"
+                    "identity.region is used instead. If no such region "
+                    "is found in the service catalog, the first found "
+                    "one is used."),
+    cfg.StrOpt('vsm_openstack_ssh_username',
+               default="root",
+               help="The user name to login openstack vm"),
+    cfg.StrOpt('vsm_openstack_ssh_password',
+               default="intel@123",
+               help="The password of ssh user name"),
+    cfg.StrOpt('vsm_openstack_image_name',
+               default="openstack-kilo",
+               help="The image is used to create servers for openstack vsm."),
+    cfg.StrOpt('vsm_openstack_flavor_id',
+               default="f441d74f-ba74-42a6-b894-12fd92e1607a",
+               help="The id of flavor."),
+    cfg.ListOpt('vsm_openstack_net_id_list',
+               default=["699171cb-4d05-476d-995b-69f2d511e247",
+                        "76f0147a-4c18-4e60-8583-3a1276816c18"],
+               help="The id list of network."),
+    cfg.StrOpt('vsm_openstack_script_path',
+               default="/opt/tempest/tools/modify_openstack.sh",
+               help="The path of openstack script to runn.")
+
 ]
 
 compute_group = cfg.OptGroup(name='compute',

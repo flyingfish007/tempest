@@ -1,0 +1,126 @@
+#!/bin/bash
+LOCAL_IPP=`ifconfig  eth0  | grep netmask | awk -F " "  '{print$2}'`
+function log_info ()
+{
+DATE_N=`date "+%Y-%m-%d %H:%M:%S"`
+USER_N=`whoami`
+echo "${DATE_N} ${USER_N} execute $0 [info] $@." >>/var/log/os_kilo_modify_ip.log
+
+}
+
+function log_error ()
+{
+DATE_N=`date "+%Y-%m-%d %H:%M:%S"`
+USER_N=`whoami`
+echo "${DATE_N} ${USER_N} execute $0 [error] $@." >>/var/log/os_kilo_modify_ip.log
+
+}
+
+if [ -f  /etc/my.cnf.d/mariadb_openstack.cnf ]
+then
+	cp -a  /etc/my.cnf.d/mariadb_openstack.cnf  /etc/my.cnf.d/mariadb_openstack.cnf_bak_1
+	sed -i "s/192.168.1.54/${LOCAL_IPP}/g" /etc/my.cnf.d/mariadb_openstack.cnf
+	if [ $? -eq 0 ]
+	then
+		log_info "modify mariadb_openstack.cnf sucessed."
+	else 
+		log_error "modify mariadb_openstack.cnf failed."
+		exit
+	fi
+else
+	echo "mariadb_openstack.cnf is not exist."
+	exit
+fi
+
+
+
+if [ -f /etc/nova/nova.conf ]
+then
+	cp -a /etc/nova/nova.conf /etc/nova/nova.conf_bak-1
+	sed -i "s/192.168.1.54/${LOCAL_IPP}/g" /etc/nova/nova.conf
+	if [ $? -eq 0 ]
+	then
+		log_info "modify nova.conf sucessed."
+	else 
+		log_error "modify nova.conf failed."
+		exit
+	fi
+else
+	echo "nova.conf is not exist."
+	exit
+fi
+
+
+
+
+if [ -f /etc/neutron/plugins/ml2/ml2_conf.ini ]
+then
+	cp -a /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugins/ml2/ml2_conf.ini_bak-1
+	sed -i "s/192.168.1.54/${LOCAL_IPP}/g" /etc/neutron/plugins/ml2/ml2_conf.ini
+	if [ $? -eq 0 ]
+	then
+		log_info "modify ml2_conf.ini sucessed."
+	else 
+		log_error "modify ml2_conf.ini failed."
+		exit
+	fi
+else
+	echo "ml2_conf.ini is not exist."
+	exit
+fi
+
+
+
+if [ -f  /etc/cinder/cinder.conf ]
+then
+	cp -a /etc/cinder/cinder.conf /etc/cinder/cinder.conf_bak-1
+	sed -i "s/192.168.1.54/${LOCAL_IPP}/g" /etc/cinder/cinder.conf
+	if [ $? -eq 0 ]
+	then
+		log_info "modify cinder.conf sucessed."
+	else 
+		log_error "modify cinder.conf failed."
+		exit
+	fi
+else
+	echo "cinder.conf is not exist."
+	exit
+fi
+
+
+sed -i "s/192.168.1.54/${LOCAL_IPP}/g" /etc/hosts
+	if [ $? -eq 0 ]
+	then
+		log_info "modify hosts sucessed."
+	else 
+		log_error "modify hostsfailed."
+		exit
+	fi
+
+
+
+
+aa=`ovs-vsctl show  | grep 'Bridge br-ex' | awk -F " " '{print$2}'`
+
+if [ $aa  =  br-ex ]
+then
+	echo 'ip link set br-ex up' >/etc/rc.d/rc.local
+	echo 'ip addr add 110.1.0.240/16 dev br-ex' >/etc/rc.d/rc.local
+	chmod +x /etc/rc.d/rc.local
+else
+	echo  " bridge is not exist"
+	exit
+fi
+echo "modify ip sucessed."
+
+sed -i "s/enabled_backends = lvm//g" /etc/cinder/cinder.conf
+sed -i "s/\[lvm\]//g" /etc/cinder/cinder.conf
+sed -i "s/volume_driver = cinder.volume.drivers.lvm.LVMVolumeDriver//g" /etc/cinder/cinder.conf
+sed -i "s/volume_group = cinder-volumes//g" /etc/cinder/cinder.conf
+sed -i "s/iscsi_protocol = iscsi//g" /etc/cinder/cinder.conf
+sed -i "s/iscsi_helper = lioadm//g" /etc/cinder/cinder.conf
+
+sleep 2
+reboot
+
+echo "please reboot system now."
