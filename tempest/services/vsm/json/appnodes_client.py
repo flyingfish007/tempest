@@ -73,7 +73,10 @@ class AppnodesClient(service_client.ServiceClient):
         })
         url = "appnodes"
         resp, body = self.post(url, post_body)
-        body = json.loads(body)
+        try:
+            body = json.loads(body)
+        except Exception:
+            body = body
         self.validate_response(schema.create_appnode, resp, body)
         # TODO return
         return resp, service_client.ResponseBody(resp, body)

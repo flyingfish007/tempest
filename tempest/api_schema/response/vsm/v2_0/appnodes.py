@@ -25,17 +25,17 @@ list_appnodes = {
                     'properties': {
                         'id': {'type': 'integer'},
                         'os_username': {'type': 'string'},
-                        'xtrust_user': {'type': 'string'},
+                        'ssh_user': {'type': 'string'},
                         'os_tenant_name': {'type': 'string'},
                         'os_auth_url': {'type': 'string'},
                         'os_region_name': {'type': 'string'},
                         'os_password': {'type': 'string'},
-                        'vsmapp_id': {'type': 'string'},
+                        'vsmapp_id': {'type': 'integer'},
                         'uuid': {'type': 'string'},
                         'ssh_status': {'type': 'string'},
-                        'log_info': {'type': 'string'}
+                        'log_info': {'type': 'null'}
                     },
-                    'required': ['id', 'os_username', 'xtrust_user',
+                    'required': ['id', 'os_username', 'ssh_user',
                                  'os_tenant_name', 'os_auth_url',
                                  'os_region_name', 'os_password',
                                  'vsmapp_id', 'uuid', 'ssh_status',

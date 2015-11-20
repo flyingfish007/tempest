@@ -735,54 +735,21 @@ class ApplyServers(object):
                                                self.vsm_openstack_ssh_password,
                                                "sed -i \"s/192.168.1.54 controller/%s controller/g\" /etc/hosts" % ip)
 
-                if self.vsm_openstack_ssh_username != self.ssh_username and \
-                    self.vsm_openstack_ssh_username == "root":
-                    ssh = pexpect.spawn('ssh -t %s@%s \'ssh-copy-id %s@%s\''
-                                        % (self.ssh_username,
-                                           floating_ip,
-                                           self.ssh_username,
-                                           openstack_hostname))
-                    ssh.expect("password")
-                    ssh.sendline(self.ssh_password)
-                    ssh.expect("yes/no")
-                    ssh.sendline("yes")
-                    ssh.expect("password")
-                    ssh.sendline(self.ssh_password)
-                else:
-                    ssh = pexpect.spawn('ssh -t %s@%s \'ssh-copy-id %s@%s\''
-                                        % (self.vsm_openstack_ssh_username,
-                                           floating_ip,
-                                           self.vsm_openstack_ssh_username,
-                                           openstack_hostname))
-                    ssh.expect("password")
-                    ssh.sendline(self.vsm_openstack_ssh_password)
-                    ssh.expect("yes/no")
-                    ssh.sendline("yes")
-                    ssh.expect("password")
-                    ssh.sendline(self.vsm_openstack_ssh_password)
+                cwd = os.getcwd()
+                tempest_conf = "%s/etc/tempest.conf" % cwd
+                os.system(
+                    "sed -i \"s/^vsm_openstack_auth_uri = *.*/#vsm_openstack_auth_uri = "
+                    "<None>/g\" %s" % tempest_conf)
 
-                if self.vsm_openstack_ssh_username != self.ssh_username and \
-                    self.vsm_openstack_ssh_username == "root":
-                    ssh = pexpect.spawn('ssh -t %s@%s \'ssh-copy-id %s@%s\''
-                                        % (self.ssh_username,
-                                           floating_ip,
-                                           self.ssh_username,
-                                           ip))
-                    ssh.expect("password")
-                    ssh.sendline(self.ssh_password)
-                    # ssh.expect("yes/no")
-                    # ssh.sendline("yes")
-                else:
-                    ssh = pexpect.spawn('ssh -t %s@%s \'ssh-copy-id %s@%s\''
-                                        % (self.vsm_openstack_ssh_username,
-                                           floating_ip,
-                                           self.vsm_openstack_ssh_username,
-                                           ip))
-                    ssh.expect("password")
-                    ssh.sendline(self.vsm_openstack_ssh_password)
-                    # ssh.expect("yes/no")
-                    # ssh.sendline("yes")
-                print("+++++++++++++++++++++here")
+                def _replaceInFile(file, oldstr, newstr):
+                    for line in fileinput.input(file, inplace=True):
+                        if re.search(oldstr, line):
+                            line = line.replace(oldstr, newstr)
+                        print line,
+
+                _replaceInFile(tempest_conf,
+                               "#vsm_openstack_auth_uri = <None>",
+                               "vsm_openstack_auth_uri = http://%s:5000" % ip)
 
                 localpath = CONF.get("vsm", "vsm_openstack_script_path")
                 localfile = localpath.split("/")[-1]
@@ -831,6 +798,58 @@ class ApplyServers(object):
                         print_msg("INFO", "[-] create openstack server",
                                   "[-] Waiting 5 seconds to wait the openstack "
                                   "server is running")
+
+                if self.vsm_openstack_ssh_username != self.ssh_username and \
+                    self.vsm_openstack_ssh_username == "root":
+                    ssh = pexpect.spawn('ssh -t %s@%s \'ssh-copy-id %s@%s\''
+                                        % (self.ssh_username,
+                                           floating_ip,
+                                           self.ssh_username,
+                                           ip))
+                    ssh.expect("password")
+                    ssh.sendline(self.ssh_password)
+                    ssh.expect("yes/no")
+                    ssh.sendline("yes")
+                    ssh.expect("password")
+                    ssh.sendline(self.ssh_password)
+                else:
+                    ssh = pexpect.spawn('ssh -t %s@%s \'ssh-copy-id %s@%s\''
+                                        % (self.vsm_openstack_ssh_username,
+                                           floating_ip,
+                                           self.vsm_openstack_ssh_username,
+                                           ip))
+                    ssh.expect("password")
+                    ssh.sendline(self.vsm_openstack_ssh_password)
+                    index = ssh.expect(["password","yes/no"])
+                    if index == 0:
+                        ssh.sendline(self.vsm_openstack_ssh_password)
+                    else:
+                        ssh.sendline("yes")
+                        ssh.expect("password")
+                        ssh.sendline(self.vsm_openstack_ssh_password)
+
+                if self.vsm_openstack_ssh_username != self.ssh_username and \
+                    self.vsm_openstack_ssh_username == "root":
+                    ssh = pexpect.spawn('ssh -t %s@%s \'ssh-copy-id %s@%s\''
+                                        % (self.ssh_username,
+                                           floating_ip,
+                                           self.ssh_username,
+                                           openstack_hostname))
+                    ssh.expect("password")
+                    ssh.sendline(self.ssh_password)
+                    ssh.expect("yes/no")
+                    ssh.sendline("yes")
+                else:
+                    ssh = pexpect.spawn('ssh -t %s@%s \'ssh-copy-id %s@%s\''
+                                        % (self.vsm_openstack_ssh_username,
+                                           floating_ip,
+                                           self.vsm_openstack_ssh_username,
+                                           openstack_hostname))
+                    ssh.expect("password")
+                    ssh.sendline(self.vsm_openstack_ssh_password)
+                    ssh.expect("yes/no")
+                    ssh.sendline("yes")
+
                 break
             else:
                 wait_time = wait_time + 1
@@ -1098,7 +1117,7 @@ def main():
                                             "you have an exist cluster")
         time.sleep(3)
         new_server = ""
-    if new_server == "True":
+    if new_server.lower() == "true":
         # identity info
         username = CONF.get("vsm", "openstack_username")
         password = CONF.get("vsm", "openstack_password")
@@ -1125,7 +1144,7 @@ def main():
         if os_type.lower() == "centos" and ssh_username != "root":
             print_msg("ERROR", "[-]", "[-] If your os is centos, please use root to login!")
 
-        print("Apply new servers and deploy a vsm env")
+        print_msg("INFO", "[-]", "[-] Apply new servers and deploy a vsm env")
         apply_servers = ApplyServers(username, password, tenant_name,
                                      auth_url, region_name)
 
@@ -1193,15 +1212,12 @@ def main():
         deploy_vsm = DeployVSM()
         deploy_vsm.deploy_vsm(apply_servers.fixed_ip_list)
         deploy_vsm.config_tempest()
-    elif new_server == "False":
+    elif new_server.lower() == "false":
         print_msg("INFO", "[-] create server", "[-] clean the vsm env data")
         deploy_vsm = DeployVSM()
         deploy_vsm.clean_data()
-    elif new_server == "" or new_server == None:
-        print_msg("INFO", "[-]", "[-] Using an exist vsm cluster")
     else:
-        print_msg("ERROR", "[-] vsm_env", inred("[-] Please set True or False or "
-                                                "leave blank to new_server in tempest.conf"))
+        print_msg("INFO", "[-]", "[-] Using an exist vsm cluster")
 
 if __name__ == "__main__":
     main()
