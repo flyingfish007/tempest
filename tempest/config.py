@@ -238,8 +238,8 @@ VsmGroup = [
                default='ubuntu',
                help="The os type [ubuntu or centos] you will apply. Be careful, the type "
                     "should be the os type of <image_name>"),
-    cfg.BoolOpt('new_server',
-               default=True,
+    cfg.StrOpt('new_server',
+               default="True",
                help="Destory the servers that have been applied. If False,"
                     "then only clean the data. If blank, no action to the vsm env."),
     cfg.StrOpt('image_name',
