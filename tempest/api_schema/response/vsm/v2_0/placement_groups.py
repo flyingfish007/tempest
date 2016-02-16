@@ -26,7 +26,7 @@ list_placement_groups = {
                         'id': {'type': 'integer'},
                         'acting': {'type': 'string'},
                         'state': {'type': 'string'},
-                        'pg_id': {'type': 'integer'},
+                        'pg_id': {'type': 'string'},
                         'up': {'type': 'string'}
                     },
                     'required': ['id', 'acting', 'state',
